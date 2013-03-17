@@ -12,14 +12,14 @@ from fabric.operations import put
 from fabric.context_managers import hide, cd
 
 # My stuff
-from utils import dirExists
+from utils import dirExists, toBoolean
 
 ############################################################
 # Configuration
 ############################################################
 env.hosts = ['pi@192.168.1.120']
 
-packagesToInstall = ['git', 'rtorrent']
+packagesToInstall = ['git', 'rsync', 'rtorrent']
 easyInstallList   = ['cheetah']
 gitRepositories   = ['git://github.com/midgetspy/Sick-Beard.git']
 
@@ -46,8 +46,10 @@ def prepareDirs():
 
 @task
 def installPackages(update=True):
-    with update and hide('stdout'):
-        sudo('apt-get update')
+    update = toBoolean(update)
+    if update:
+        with hide('stdout'):
+            sudo('apt-get update')
     sudo('apt-get install -y {0}'.format(' '.join(packagesToInstall)))
 
 @task
