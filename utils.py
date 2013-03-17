@@ -9,5 +9,12 @@ def dirExists(dirName):
     with settings(warn_only=True):
         return not run('test -d {0}'.format(dirName)).failed
 
+def toBoolean(arg):
+    ret = bool(arg)
+    if isinstance(arg, str):
+        if arg.lower() == 'false' or arg == '0':
+            ret = False
+    return ret
+
 # EOF
 
