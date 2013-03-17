@@ -19,6 +19,7 @@ from utils import dirExists, toBoolean
 ############################################################
 env.hosts = ['pi@192.168.1.120']
 
+dirsToMake        = ['~/src', '~/runtime']
 packagesToInstall = ['git', 'rsync', 'rtorrent']
 easyInstallList   = ['cheetah']
 gitRepositories   = ['git://github.com/midgetspy/Sick-Beard.git']
@@ -41,8 +42,12 @@ def deploySSH(removeBanner=True):
 
 @task
 def prepareDirs():
-    if not dirExists('~/src'):
-        run("mkdir $HOME/src")
+    dirList = []
+    for d in dirsToMake:
+        if not dirExists(d):
+            dirList.append(d)
+    if dirList:
+        run("mkdir {0}".format(" ".join(dirList)))
 
 @task
 def installPackages(update=True):
@@ -73,6 +78,12 @@ def cloneGitRepos():
                 name = os.path.splitext(os.path.split(repo)[1])[0]
                 if run('test -d {0}'.format(name)).failed:
                     run('git clone {0}'.format(repo))
+
+@task
+def copyInitScripts():
+    for script in glob('init/*.conf'):
+        # TODO: stop first
+        put(script, '/etc/init/', use_sudo=True)
 
 @task
 def deploySoftware(update=True):
