@@ -5,11 +5,11 @@
 
 from fabric.api import settings, run
 
-def dirExists(dirName):
+def dir_exists(dir_name):
     with settings(warn_only=True):
-        return not run('test -d {0}'.format(dirName)).failed
+        return not run('test -d {0}'.format(dir_name)).failed
 
-def toBoolean(arg):
+def to_boolean(arg):
     ret = bool(arg)
     if isinstance(arg, str):
         if arg.lower() == 'false' or arg == '0':
