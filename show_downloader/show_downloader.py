@@ -8,8 +8,10 @@
 
 from datetime import datetime
 import os
+from tempfile import mkstemp
+import shutil
 from lxml import etree
-import urllib2, re, socket
+import urllib2, socket
 
 from Containers import TimedDict
 import PickleFile
@@ -35,7 +37,7 @@ def get_info(feed):
     except (etree.XMLSyntaxError, urllib2.URLError, socket.timeout):
         print 'Service Unavailable'
 
-def download_torrent(torrent_file, dest_file):
+def download_torrent(torrent_file):
     """Download the torrent in ~/torrent/watch.
 
     @arg  torrent_file: torrent to download
@@ -47,14 +49,20 @@ def download_torrent(torrent_file, dest_file):
 
     """
 
-    dest_file = os.path.join(os.environ['HOME'], 'torrent', 'watch', '%s.torrent' % dest_file)
+    # Create a temporary file to download the torrent to
+    file_descriptor, temp_path = mkstemp()
+    file_name = os.path.split(torrent_file)[1]
+    dest_file = os.path.join(os.environ['HOME'], 'torrent', 'watch', file_name)
     if not os.path.exists(os.path.split(dest_file)[0]):
         print "Folder doesn't exist -> %s" % dest_file
         return False
     torrent = urllib2.urlopen(torrent_file, timeout=30)
-    output = open(dest_file, 'wb')
+    output = open(temp_path, 'wb')
     output.write(torrent.read())
     output.close()
+    os.close(file_descriptor) # Cleanup
+    # Copy to the watch folder
+    shutil.move(temp_path, dest_file)
     return True
 
 def download_shows(feed_list):
@@ -74,12 +82,12 @@ def download_shows(feed_list):
     for feed in feed_list:
         feed_info = get_info(feed)
         for episode, episode_date, torrent_file in feed_info:
-#            print episode
+            #print episode
             if (datetime.today() - episode_date).days > 3*7: # Too old!
                 continue
             if episode in cache: # Already downloaded
                 continue
-            sc = download_torrent(torrent_file, episode.replace(' ', '.'))
+            sc = download_torrent(torrent_file)
             if not sc:
                 print "Problems downloading %s" % episode
             else:
