@@ -6,7 +6,7 @@
 # =============================================================================
 """"""
 
-from datetime import datetime, date
+from datetime import datetime
 import os
 from lxml import etree
 import urllib2, re, socket
@@ -29,9 +29,9 @@ def get_info(feed):
         titles = tree.xpath("/rss/channel/item/title[not (contains(., '720p') or contains(., '720P'))]/text()")
         published_dates = tree.xpath("/rss/channel/item/pubDate/text()")
         torrent_files = tree.xpath("/rss/channel/item/link[not (contains(., '720p') or contains(., '720P'))]/text()")
-        return [(titles[i],
+        return [(str(titles[i]),
                  datetime.strptime(published_dates[i], '%a, %d %b %Y %H:%M:%S +0000'),
-                 torrent_files[i]) for i in range(len(titles))]
+                 str(torrent_files[i])) for i in range(len(titles))]
     except (etree.XMLSyntaxError, urllib2.URLError, socket.timeout):
         print 'Service Unavailable'
 
@@ -48,7 +48,6 @@ def download_torrent(torrent_file, dest_file):
     """
 
     dest_file = os.path.join(os.environ['HOME'], 'torrent', 'watch', '%s.torrent' % dest_file)
-    print dest_file
     if not os.path.exists(os.path.split(dest_file)[0]):
         print "Folder doesn't exist -> %s" % dest_file
         return False
@@ -72,21 +71,19 @@ def download_shows(feed_list):
     cache = TimedDict(7*24*3600) # Keys last for a week
     if os.path.exists(cache_file):
         cache = PickleFile.load(cache_file)
-    try:
-        for feed in feed_list:
-            feed_info = get_info(feed)
-            for episode, date, torrent_file in feed_info:
-                if (date.today() - date).days > 7: # Too old!
-                    pass
-                if episode in cache: # Already downloaded
-                    pass
-                sc = download_torrent(torrent_file, episode.replace(' ', '.'))
-                if not sc:
-                    print "Problems downloading %s" % episode
-                else:
-                    cache.add(episode)
-    except TypeError:
-        pass
+    for feed in feed_list:
+        feed_info = get_info(feed)
+        for episode, episode_date, torrent_file in feed_info:
+#            print episode
+            if (datetime.today() - episode_date).days > 7: # Too old!
+                continue
+            if episode in cache: # Already downloaded
+                continue
+            sc = download_torrent(torrent_file, episode.replace(' ', '.'))
+            if not sc:
+                print "Problems downloading %s" % episode
+            else:
+                cache.add(episode, episode_date)
     cache.delete_expired()
     PickleFile.write(cache_file, cache)
 
