@@ -62,7 +62,8 @@ def download_torrent(torrent_file):
     output.close()
     os.close(file_descriptor) # Cleanup
     # Copy to the watch folder
-    shutil.move(temp_path, dest_file)
+    shutil.copy(temp_path, dest_file)
+    os.remove(temp_path)
     return True
 
 def download_shows(feed_list):
