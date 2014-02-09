@@ -68,14 +68,14 @@ def download_shows(feed_list):
     if isinstance(feed_list, str):
         feed_list = [feed_list]
     cache_file = os.path.expanduser('~/runtime/tv_shows.cache')
-    cache = TimedDict(7*24*3600) # Keys last for a week
+    cache = TimedDict(3*7*24*3600) # Keys last for a week
     if os.path.exists(cache_file):
         cache = PickleFile.load(cache_file)
     for feed in feed_list:
         feed_info = get_info(feed)
         for episode, episode_date, torrent_file in feed_info:
 #            print episode
-            if (datetime.today() - episode_date).days > 7: # Too old!
+            if (datetime.today() - episode_date).days > 3*7: # Too old!
                 continue
             if episode in cache: # Already downloaded
                 continue
