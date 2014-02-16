@@ -76,7 +76,7 @@ def send_email(result, dest_folder, extras):
     from email.mime.text import MIMEText
     from subprocess import Popen, PIPE
     # Build message
-    if not result['move']:
+    if (not result['move']) and (not extras) and (not result['keep']):
         return
     body = "Hola Marta & Albert,\n"
     body += "\n"
