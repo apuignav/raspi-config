@@ -24,9 +24,9 @@ simple_install = True
 dirs_to_make        = ['~/src', '~/runtime']
 things_to_download  = []
 apt_repos           = []
-packages_to_install = ['git', 'python-software-properties', 'python-pip', 'ca-certificates']
-easy_install_list   = ['flexget']
-git_repositories    = ['https://github.com/MilhouseVH/bcmstat.git', 'https://github.com/pilluli/service.xbmc.callbacks.git']
+packages_to_install = ['git', 'python-software-properties', 'python-pip', 'ca-certificates', 'lsof', 'python-lxml']
+easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuzzywuzzy"', "speedtest-cli", "xbmc-json"]
+git_repositories    = ['https://github.com/MilhouseVH/bcmstat.git', 'https://github.com/pilluli/service.xbmc.callbacks.git', 'https://github.com/amet/script.xbmc.subtitles.git', 'https://github.com/apuignav/raspi-config.git']
 if not simple_install:
     apt_repos           = ['ppa:keithw/mosh']
     # For deluge from source
@@ -50,6 +50,9 @@ if not simple_install:
 # Utils
 #sudo apt-get install localepurge
 #sudo localepurge
+# Things to do
+# ln -sf $HOME/src/service.xbmc.callbacks ~/.xbmc/addons
+# ln -sf $HOME/src/script.xbmc.subtitles ~/.xbmc/addons
 
 ############################################################
 # Tasks
