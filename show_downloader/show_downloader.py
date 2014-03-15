@@ -24,7 +24,8 @@ def get_info(feed):
 
     """
     try:
-        url = urllib2.urlopen(feed, timeout=30)
+        req = urllib2.Request(feed, headers={'User-Agent': "Magic Browser"}) # Hack to avoid 403 HTTP
+        url = urllib2.urlopen(req, timeout=30)
         tree = etree.parse(url)
         titles = tree.xpath("/rss/channel/item/title[not (contains(., '720p') or contains(., '720P'))]/text()")
         published_dates = tree.xpath("/rss/channel/item/pubDate/text()")
@@ -32,11 +33,12 @@ def get_info(feed):
         return [(str(titles[i]),
                  datetime.strptime(published_dates[i], '%a, %d %b %Y %H:%M:%S +0000'),
                  str(torrent_files[i])) for i in range(len(titles))]
-    except (etree.XMLSyntaxError, urllib2.URLError, socket.timeout):
-        print 'Service Unavailable'
+    except (etree.XMLSyntaxError, urllib2.URLError, socket.timeout), error:
+        print 'Service Unavailable -> %s' % error
+        return []
 
 def download_torrent(torrent_file):
-    """Download the torrent in ~/torrent/watch.
+    """Download the torrent in ~/runtime/watch.
 
     @arg  torrent_file: torrent to download
     @type torrent_file: str
@@ -48,7 +50,7 @@ def download_torrent(torrent_file):
     """
 
     file_name = os.path.split(torrent_file)[1]
-    dest_file = os.path.join(os.environ['HOME'], 'torrent', 'watch', file_name)
+    dest_file = os.path.join(os.environ['HOME'], 'runtime', 'watch', file_name)
     if not os.path.exists(os.path.split(dest_file)[0]):
         print "Folder doesn't exist -> %s" % dest_file
         return False
