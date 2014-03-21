@@ -17,9 +17,11 @@ def do_backup(args):
 
     """
     output_file = os.path.join(args.folder, 'backup.tar.gz')
-    os.system("sudo initctl stop xbmc")
-    os.system("cd /home/pi && tar -cvz %s .xbmc" % output_file)
-    os.system("sudo initctl start xbmc")
+    if os.path.exists(output_file):
+        os.remove(output_file)
+    os.system("sudo stop xbmc")
+    os.system("cd /home/pi && tar -cvzf %s .xbmc" % output_file)
+    os.system("sudo start xbmc")
     print "Backed up to %s" % output_file
 
 def restore_backup(args):
@@ -32,9 +34,9 @@ def restore_backup(args):
         print "Cannot find backup file %s" % args.backup_file
         return
     shutil.copy(args.backup_file, '/home/pi/')
-    os.system("sudo initctl stop xbmc")
+    os.system("sudo stop xbmc")
     os.system("cd /home/pi && tar -xzf backup.tar.gz && rm backup.tar.gz")
-    os.system("sudo initctl start xbmc")
+    os.system("sudo start xbmc")
     print "Restored backup from %s" % args.backup_file
 
 if __name__ == '__main__':
