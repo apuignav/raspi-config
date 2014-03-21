@@ -170,14 +170,14 @@ class TimedDict:
         and delete them.
 
         """
-        for key in self._dict:
+        for key in self._dict.keys():
             expiration_time = self._dict[key]['expiration_time']
             if expiration_time < datetime.datetime.now():
                 self.delete(key)
 
     def delete_all(self):
         """Clear the internal dictionary."""
-        for key in self._dict:
+        for key in self._dict.keys():
             self.delete(key)
 
     def add(self, key, value):
