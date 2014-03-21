@@ -56,13 +56,16 @@ def find_path_for_episodes(episodes, dest_folder):
     Return {origin: (dest, score)}
     """
     regex = re.compile("[Ss]([0-9][0-9])[Ee][0-9][0-9]")
-    alt_regex = re.compile("([0-9])[0-9][0-9]") # Spanish format
+    alt_regex = re.compile("([0-9])x[0-9][0-9]") # 1x0Y format
+    alt_alt_regex = re.compile("([0-9])[0-9][0-9]") # Spanish format
     output = {'move': [], 'keep': []}
     for episode_path, episode_info in episodes.items():
         show, score = episode_info
         match = regex.search(episode_path)
         if not match:
             match = alt_regex.search(episode_path)
+            if not match:
+                match = alt_alt_regex.search(episode_path)
         if score > 50 and match:
             season = int(match.group(1))
             final_dir = os.path.join(dest_folder, show, 'Season %s' % season)
