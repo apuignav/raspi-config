@@ -24,4 +24,4 @@
 # 
 # m h  dom mon dow   command
 0 7,8,9,12,16,17 * * * python /home/pi/src/raspi-config/show_downloader/show_downloader.py
-0 19 * * * python /home/pi/src/raspi-config/show_downloader/move_episodes.py torrent/completo/ /media/RaspiHD/Series/ --update-xbmc --send-email
+0 19 * * * python /home/pi/src/raspi-config/show_downloader/move_episodes.py /home/pi/torrent/completo/ /media/RaspiHD/Series/ --update-xbmc --send-email
