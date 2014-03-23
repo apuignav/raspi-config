@@ -21,12 +21,15 @@ env.hosts = ['pi@192.168.1.120']
 
 simple_install = True
 
-dirs_to_make        = ['~/src', '~/runtime']
+dirs_to_make        = ['~/src', '~/runtime', '~/runtime/watch']
 things_to_download  = []
 apt_repos           = []
-packages_to_install = ['git', 'python-software-properties', 'python-pip', 'ca-certificates', 'lsof', 'python-lxml']
-easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuzzywuzzy"', "speedtest-cli", "xbmc-json"]
-git_repositories    = ['https://github.com/MilhouseVH/bcmstat.git', 'https://github.com/pilluli/service.xbmc.callbacks.git', 'https://github.com/amet/script.xbmc.subtitles.git', 'https://github.com/apuignav/raspi-config.git']
+packages_to_install = ['git', 'python-software-properties', 'python-pip', 'ca-certificates', 'lsof', 'python-lxml', 'mailutils', 'sendmail']
+easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuzzywuzzy"', "speedtest-cli", "validictory", "pebble"]
+git_repositories    = ['https://github.com/MilhouseVH/bcmstat.git',
+                       #'https://github.com/pilluli/service.xbmc.callbacks.git',
+                       'https://github.com/amet/script.xbmc.subtitles.git',
+                       'https://github.com/apuignav/raspi-config.git']
 if not simple_install:
     apt_repos           = ['ppa:keithw/mosh']
     # For deluge from source
@@ -47,12 +50,17 @@ if not simple_install:
     #xdg-utils
     #python-mako
 
-# Utils
-#sudo apt-get install localepurge
-#sudo localepurge
 # Things to do
-# ln -sf $HOME/src/service.xbmc.callbacks ~/.xbmc/addons
-# ln -sf $HOME/src/script.xbmc.subtitles ~/.xbmc/addons
+# ln -sf $HOME/src/script.xbmc.subtitles/script.xbmc.subtitles ~/.xbmc/addons/
+# forward file in root/user mail
+# Deluge
+# sudo cp $HOME/src/raspi-config/deluge/deluge.conf /etc/init/
+# sudo cp $HOME/src/raspi-config/deluge/deluge-webui.conf /etc/init/
+# sudo mkdir -p /var/log/deluge && sudo chown -R pi:pi /var/log/deluge && sudo chmod -R 750 /var/log/deluge
+# sudo cp $HOME/src/raspi-config/deluge/logrotate.d_deluge /etc/logrotate.d/deluge
+# Torrent
+# ln -s /media/RaspiHD/torrent/completo/ $HOME/runtime/
+# ln -sf /media/RaspiHD/torrent/tv_shows.cache $HOME/runtime/
 
 ############################################################
 # Tasks
