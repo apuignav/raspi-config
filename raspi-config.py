@@ -12,7 +12,7 @@ from fabric.operations import put
 from fabric.context_managers import hide, cd
 
 # My stuff
-from utils import dir_exists, to_boolean
+from utils import dir_exists, file_exists, to_boolean
 
 ############################################################
 # Configuration
@@ -25,42 +25,17 @@ dirs_to_make        = ['~/src', '~/runtime', '~/runtime/watch']
 things_to_download  = []
 apt_repos           = []
 packages_to_install = ['git', 'python-software-properties', 'python-pip', 'ca-certificates', 'lsof', 'python-lxml', 'mailutils', 'sendmail']
-easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuzzywuzzy"', "speedtest-cli", "validictory", "pebble"]
+easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuzzywuzzy"',
+                       "speedtest-cli",
+                       "xbmc-json",
+                       "validictory",
+                       "pebble"]
 git_repositories    = ['https://github.com/MilhouseVH/bcmstat.git',
                        #'https://github.com/pilluli/service.xbmc.callbacks.git',
                        'https://github.com/amet/script.xbmc.subtitles.git',
                        'https://github.com/apuignav/raspi-config.git']
 if not simple_install:
     apt_repos           = ['ppa:keithw/mosh']
-    # For deluge from source
-    #python-twisted
-    #python-twisted-web
-    #python-openssl
-    #python-simplejson
-    #python-setuptools
-    #intltool
-    #python-xdg
-    #python-chardet
-    #geoip-database
-    #python-libtorrent
-    #python-notify
-    #python-pygame
-    #python-glade2
-    #librsvg2-common
-    #xdg-utils
-    #python-mako
-
-# Things to do
-# ln -sf $HOME/src/script.xbmc.subtitles/script.xbmc.subtitles ~/.xbmc/addons/
-# forward file in root/user mail
-# Deluge
-# sudo cp $HOME/src/raspi-config/deluge/deluge.conf /etc/init/
-# sudo cp $HOME/src/raspi-config/deluge/deluge-webui.conf /etc/init/
-# sudo mkdir -p /var/log/deluge && sudo chown -R pi:pi /var/log/deluge && sudo chmod -R 750 /var/log/deluge
-# sudo cp $HOME/src/raspi-config/deluge/logrotate.d_deluge /etc/logrotate.d/deluge
-# Torrent
-# ln -s /media/RaspiHD/torrent/completo/ $HOME/runtime/
-# ln -sf /media/RaspiHD/torrent/tv_shows.cache $HOME/runtime/
 
 ############################################################
 # Tasks
@@ -69,14 +44,12 @@ if not simple_install:
 def deploy_ssh(remove_banner=True):
     with settings(warn_only=True):
         # Remove annoying Debian banner
-        if remove_banner and run("test -f /etc/motd"):
+        if remove_banner and file_exists("/etc/motd"):
             sudo("mv /etc/motd /etc/motd.bak")
         # Add our public keys
         if not dir_exists('~/.ssh'):
-            # TODO: Cleanup keys and remove the test -d
-            for key in glob("pubkeys/*.pub"):
-                for host in env.hosts:
-                    local('ssh-copy-id -l -i {0} {1}'.format(key, host))
+            for host in env.hosts:
+                local('ssh-copy-id %s' % host)
 
 @task
 def prepare_dirs():
@@ -86,6 +59,7 @@ def prepare_dirs():
             dir_list.append(d)
     if dir_list:
         run("mkdir {0}".format(" ".join(['%s' % dir_ for dir_ in dir_list])))
+    run('ln -sf /media/RaspiHD/ /home/pi')
 
 @task
 def download_things():
@@ -126,6 +100,36 @@ def clone_git_repos():
                     run('git clone {0}'.format(repo))
 
 @task
+def configure_xbmc():
+    with settings(warn_only=True):
+        with cd('$HOME'):
+            run('ln -sf src/script.xbmc.subtitles/script.xbmc.subtitles ~/.xbmc/addons/')
+            if file_exists('/media/RaspiHD/backup/backup.tar.gz'):
+                run('python src/raspi-config/scripts/backup.py restore /media/RaspiHD/backup/backup.tar.gz')
+
+@task
+def configure_deluge():
+# sudo cp $HOME/src/raspi-config/deluge/logrotate.d_deluge /etc/logrotate.d/deluge
+    with settings(warn_only=True):
+        sudo("cp /home/pi/src/raspi-config/deluge/deluge.conf /etc/init/")
+        sudo("cp /home/pi/src/raspi-config/deluge/deluge-webui.conf /etc/init/")
+        sudo("mkdir -p /var/log/deluge && sudo chown -R pi:pi /var/log/deluge && sudo chmod -R 750 /var/log/deluge")
+        sudo("cp /home/pi/src/raspi-config/deluge/logrotate.d_deluge /etc/logrotate.d/deluge")
+        run("ln -sf /media/RaspiHD/torrent/completo/ /home/pi/runtime/")
+        run("ln -sf /media/RaspiHD/torrent/download/ /home/pi/runtime/")
+        run("ln -sf /media/RaspiHD/torrent/tv_shows.cache /home/pi/runtime/")
+        if dir_exists('/media/RaspiHD/backup/deluge'):
+            run('mkdir /home/pi/.config')
+            run('cp -r /media/RaspiHD/backup/deluge /home/pi/.config/')
+
+
+@task
+def configure_mail():
+    with settings(warn_only=True):
+        sudo('echo "djkarras@gmail.com" > ~root/.forward')
+        run('echo "djkarras@gmail.com" > ~/.forward')
+
+@task
 def deploy_software(update=True):
     prepare_dirs()
     download_things()
@@ -135,9 +139,16 @@ def deploy_software(update=True):
     clone_git_repos()
 
 @task
+def deploy_configuration():
+    configure_xbmc()
+    configure_deluge()
+    configure_mail()
+
+@task
 def deploy(update=True):
     deploy_ssh()
     deploy_software(update)
+    deploy_configuration()
 
 if __name__ == '__main__':
     deploy()
