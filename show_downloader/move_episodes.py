@@ -111,11 +111,14 @@ def update_xbmc():
     from xbmcjson import XBMC
     xbmc = XBMC('http://localhost:8080/jsonrpc')
     # Check everything is OK
-    if not xbmc.JSONRPC.Ping()['result'] == 'pong':
-        print "Cannot talk to XBMC"
-        return
-    if not xbmc.VideoLibrary.Scan()['result'] == 'OK':
-        print "Failed updating the video library"
+    try:
+        #if not xbmc.JSONRPC.Ping()['result'] == 'pong':
+            #print "Cannot talk to XBMC"
+            #return
+        if not xbmc.VideoLibrary.Scan()['result'] == 'OK':
+            print "Failed updating the video library"
+    except Exception, e:
+        print "Failed updating the video library -> %s" % e
     return
 
 if __name__ == '__main__':
