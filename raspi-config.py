@@ -24,7 +24,7 @@ simple_install = True
 dirs_to_make        = ['~/src', '~/runtime', '~/runtime/watch']
 things_to_download  = []
 apt_repos           = []
-packages_to_install = ['git', 'python-software-properties', 'python-pip', 'ca-certificates', 'lsof', 'python-lxml', 'mailutils', 'sendmail']
+packages_to_install = ['git', 'python-software-properties', 'python-pip', 'ca-certificates', 'lsof', 'python-lxml', 'mailutils', 'sendmail', 'smartmontools']
 easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuzzywuzzy"',
                        "speedtest-cli",
                        "xbmc-json",
