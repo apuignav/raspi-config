@@ -25,7 +25,7 @@ def do_backup(args):
         """
         if os.path.exists(output_file):
             os.remove(output_file)
-        base_folder, folder_to_backup = os.path.split(output_file)
+        base_folder, folder_to_backup = os.path.split(origin_folder)
         if service:
             os.system("sudo stop %s" % service)
         os.system("cd %s && tar -cvzf %s %s" % (base_folder, output_file, folder_to_backup))
@@ -63,7 +63,7 @@ def restore_backup(args):
         os.system("cd %s && tar -xzf %s" % (base_folder, backup_file))
         if service:
             os.system("sudo start %s" % service)
-        print "Restored backup from %s" % args.backup_file
+        print "Restored backup from %s" % backup_file
 
     backup_folder = os.path.abspath(args.folder)
     perform_restore(os.path.join(backup_folder, 'backup.xbmc.tar.gz'), '/home/pi/.xbmc', 'xbmc')
