@@ -24,12 +24,16 @@ simple_install = True
 dirs_to_make        = ['~/src', '~/runtime', '~/runtime/watch']
 things_to_download  = []
 apt_repos           = []
-packages_to_install = ['git', 'python-software-properties', 'python-pip', 'ca-certificates', 'lsof', 'python-lxml', 'mailutils', 'sendmail', 'smartmontools']
+packages_to_install = ['git', 'python-software-properties', 'python-pip', 'python-dev', 'ca-certificates', 'lsof', 'python-lxml', 'mailutils', 'sendmail', 'smartmontools']
+# For psutil
+# http://raspberrypi.stackexchange.com/questions/8566/peerguardian-moblock-installation-on-raspbmc
 easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuzzywuzzy"',
                        "speedtest-cli",
                        "xbmc-json",
                        "validictory",
-                       "pebble"]
+                       "pebble",
+                       #"psutil",
+                       ]
 git_repositories    = ['https://github.com/MilhouseVH/bcmstat.git',
                        #'https://github.com/pilluli/service.xbmc.callbacks.git',
                        'https://github.com/amet/script.xbmc.subtitles.git',
@@ -59,7 +63,8 @@ def prepare_dirs():
             dir_list.append(d)
     if dir_list:
         run("mkdir {0}".format(" ".join(['%s' % dir_ for dir_ in dir_list])))
-    run('ln -sf /media/RaspiHD/ /home/pi')
+    with cd('/home/pi'):
+        run('ln -sf /media/RaspiHD/ .')
 
 @task
 def download_things():
@@ -118,16 +123,17 @@ def configure_deluge():
         run("ln -sf /media/RaspiHD/torrent/completo/ /home/pi/runtime/")
         run("ln -sf /media/RaspiHD/torrent/download/ /home/pi/runtime/")
         run("ln -sf /media/RaspiHD/torrent/tv_shows.cache /home/pi/runtime/")
-        if dir_exists('/media/RaspiHD/backup/deluge'):
-            run('mkdir /home/pi/.config')
-            run('cp -r /media/RaspiHD/backup/deluge /home/pi/.config/')
-
+        run('mkdir /home/pi/.config')
 
 @task
 def configure_mail():
     with settings(warn_only=True):
         sudo('echo "djkarras@gmail.com" > ~root/.forward')
         run('echo "djkarras@gmail.com" > ~/.forward')
+
+@task
+def configure_crontab():
+    run("crontab /home/pi/src/raspi-config/config/crontab.pi")
 
 @task
 def deploy_software(update=True):
@@ -143,6 +149,7 @@ def deploy_configuration():
     configure_xbmc()
     configure_deluge()
     configure_mail()
+    configure_crontab()
 
 @task
 def deploy(update=True):
