@@ -7,7 +7,6 @@
 """XBMC backup utils."""
 
 import os
-import shutil
 import argparse
 
 def do_backup(args):
