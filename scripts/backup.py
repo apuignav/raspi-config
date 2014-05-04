@@ -70,11 +70,11 @@ def restore_backup(args):
 
     backup_folder = os.path.abspath(args.folder)
     for service in args.services:
-        backup_file, backup_folder = all_services.get(service, (None, None))
-        if backup_file is None:
+        service_file, service_folder = all_services.get(service, (None, None))
+        if service_file is None:
             print "Unknown service %s" % service
             continue
-        perform_restore(os.path.join(backup_folder, backup_file), backup_folder, service)
+        perform_restore(os.path.join(backup_folder, service_file), service_folder, service)
 
 all_services = {'xbmc'  : ('backup.xbmc.tar.gz', '/home/pi/.xbmc'),
                 'deluge': ('backup.deluge.tar.gz', '/home/pi/.config/deluge')}
