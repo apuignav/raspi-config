@@ -33,8 +33,12 @@ def do_backup(args):
         print "Backed up to %s" % output_file
 
     output_folder = os.path.abspath(args.folder)
-    perform_backup('/home/pi/.xbmc', os.path.join(output_folder, 'backup.xbmc.tar.gz'), 'xbmc')
-    perform_backup('/home/pi/.config/deluge', os.path.join(output_folder, 'backup.deluge.tar.gz'), 'deluge')
+    for service in args.services:
+        backup_file, backup_folder = all_services.get(service, (None, None))
+        if backup_file is None:
+            print "Unknown service %s" % service
+            continue
+        perform_backup(backup_folder, os.path.join(output_folder, backup_file), service)
 
 def restore_backup(args):
     """Restore backup to  /home/pi/.xbmc.
@@ -65,8 +69,16 @@ def restore_backup(args):
         print "Restored backup from %s" % backup_file
 
     backup_folder = os.path.abspath(args.folder)
-    perform_restore(os.path.join(backup_folder, 'backup.xbmc.tar.gz'), '/home/pi/.xbmc', 'xbmc')
-    perform_restore(os.path.join(backup_folder, 'backup.deluge.tar.gz'), '/home/pi/.config/deluge', 'deluge')
+    for service in args.services:
+        backup_file, backup_folder = all_services.get(service, (None, None))
+        if backup_file is None:
+            print "Unknown service %s" % service
+            continue
+        perform_restore(os.path.join(backup_folder, backup_file), backup_folder, service)
+
+all_services = {'xbmc'  : ('backup.xbmc.tar.gz', '/home/pi/.xbmc'),
+                'deluge': ('backup.deluge.tar.gz', '/home/pi/.config/deluge')}
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -74,10 +86,12 @@ if __name__ == '__main__':
     # Parser for the backup command
     backup_parser = subparsers.add_parser("backup")
     backup_parser.add_argument('folder', action='store', type=str, help="Folder to copy the backup file to")
+    backup_parser.add_argument('services', action='store', type=str, nargs='+', default=['xbmc', 'deluge'], help="Services to backup")
     backup_parser.set_defaults(func=do_backup)
     # Parser for the restore command
     restore_parser = subparsers.add_parser("restore")
     restore_parser.add_argument('folder', action='store', type=str, help="Backup folder to restore from")
+    restore_parser.add_argument('services', action='store', type=str, nargs='+', default=['xbmc', 'deluge'], help="Services to restore")
     restore_parser.set_defaults(func=restore_backup)
     # Parse!
     args = parser.parse_args()
