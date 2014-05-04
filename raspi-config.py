@@ -3,12 +3,10 @@
 # @author Albert Puig (albert.puig@epfl.ch)
 # @date   17.03.2013
 
-from glob import glob
 import os
 
 # Fabric stuff
 from fabric.api import task, local, env, run, sudo, settings#, abort
-from fabric.operations import put
 from fabric.context_managers import hide, cd
 
 # My stuff
@@ -24,7 +22,19 @@ simple_install = True
 dirs_to_make        = ['~/src', '~/runtime', '~/runtime/watch']
 things_to_download  = []
 apt_repos           = []
-packages_to_install = ['git', 'python-software-properties', 'python-pip', 'python-dev', 'ca-certificates', 'lsof', 'python-lxml', 'mailutils', 'sendmail', 'smartmontools']
+packages_to_install = ['git',
+                       'python-software-properties',
+                       'python-pip',
+                       'python-dev',
+                       'ca-certificates',
+                       'lsof',
+                       'python-lxml',
+                       'mailutils',
+                       'sendmail',
+                       'smartmontools',
+                       'curl',
+                       #'iotop',
+                      ]
 # For psutil
 # http://raspberrypi.stackexchange.com/questions/8566/peerguardian-moblock-installation-on-raspbmc
 easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuzzywuzzy"',
