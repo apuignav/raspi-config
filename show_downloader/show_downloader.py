@@ -57,10 +57,14 @@ def download_torrent(torrent_file):
     if os.path.exists(dest_file):
         print "Destination torrent already exists -> %s" % dest_file
         return False
-    torrent = urllib2.urlopen(torrent_file, timeout=30)
-    output = open(dest_file, 'wb')
-    output.write(torrent.read())
-    output.close()
+    try:
+        torrent = urllib2.urlopen(torrent_file, timeout=30)
+        output = open(dest_file, 'wb')
+        output.write(torrent.read())
+        output.close()
+    except Exception, e:
+        print "Problem downloading %s -> %s" % (dest_file, e)
+        return False
     return True
 
 def download_shows(feed_list):
