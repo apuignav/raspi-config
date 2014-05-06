@@ -19,7 +19,7 @@ env.hosts = ['pi@192.168.1.120']
 
 simple_install = True
 
-dirs_to_make        = ['~/src', '~/runtime', '~/runtime/watch']
+dirs_to_make        = ['~/src', '~/runtime']
 things_to_download  = []
 apt_repos           = []
 packages_to_install = ['git',
@@ -144,7 +144,10 @@ def configure_deluge():
         run("ln -sf /media/RaspiHD/torrent/completo/ /home/pi/runtime/")
         run("ln -sf /media/RaspiHD/torrent/download/ /home/pi/runtime/")
         run("ln -sf /media/RaspiHD/torrent/tv_shows.cache /home/pi/runtime/")
-        run('mkdir /home/pi/.config')
+        sudo("start deluge")
+        sudo("stop deluge")
+        if file_exists('/media/RaspiHD/backup/backup.deluge.tar.gz'):
+            run('python $HOME/src/raspi-config/scripts/backup.py restore /media/RaspiHD/backup/ deluge')
 
 @task
 def configure_mail():
