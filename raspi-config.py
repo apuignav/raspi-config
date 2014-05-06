@@ -33,6 +33,7 @@ packages_to_install = ['git',
                        'sendmail',
                        'smartmontools',
                        'curl',
+                       'nmon',
                        #'iotop',
                       ]
 # For psutil
@@ -46,10 +47,20 @@ easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuz
                        ]
 git_repositories    = ['https://github.com/MilhouseVH/bcmstat.git',
                        #'https://github.com/pilluli/service.xbmc.callbacks.git',
-                       'https://github.com/amet/script.xbmc.subtitles.git',
+                       #'https://github.com/amet/script.xbmc.subtitles.git',
                        'https://github.com/apuignav/raspi-config.git']
 if not simple_install:
     apt_repos           = ['ppa:keithw/mosh']
+
+# For monitorix
+# wget http://apt.izzysoft.de/izzysoft.asc
+# sudo apt-key add izzysoft.asc
+# add
+#     deb [arch=all] http://apt.izzysoft.de/ubuntu generic universe
+# to /etc/apt/sources.list
+# sudo apt-get update
+# sudo apt-get install monitorix
+
 
 ############################################################
 # Tasks
@@ -114,13 +125,13 @@ def clone_git_repos():
                 if run('test -d {0}'.format(name)).failed:
                     run('git clone {0}'.format(repo))
 
-@task
-def configure_xbmc():
-    with settings(warn_only=True):
-        with cd('$HOME'):
-            run('ln -sf src/script.xbmc.subtitles/script.xbmc.subtitles ~/.xbmc/addons/')
-            if file_exists('/media/RaspiHD/backup/backup.tar.gz'):
-                run('python src/raspi-config/scripts/backup.py restore /media/RaspiHD/backup/backup.tar.gz')
+#@task
+#def configure_xbmc():
+    #with settings(warn_only=True):
+        #with cd('$HOME'):
+            #run('ln -sf $HOME/src/script.xbmc.subtitles/script.xbmc.subtitles ~/.xbmc/addons/')
+            #if file_exists('/media/RaspiHD/backup/backup.tar.gz'):
+                #run('python src/raspi-config/scripts/backup.py restore /media/RaspiHD/backup/backup.tar.gz')
 
 @task
 def configure_deluge():
@@ -156,7 +167,7 @@ def deploy_software(update=True):
 
 @task
 def deploy_configuration():
-    configure_xbmc()
+    #configure_xbmc()
     configure_deluge()
     configure_mail()
     configure_crontab()
