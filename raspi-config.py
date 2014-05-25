@@ -34,6 +34,7 @@ packages_to_install = ['git',
                        'smartmontools',
                        'curl',
                        'nmon',
+                       'deluge-console',
                        #'iotop',
                       ]
 # For psutil
