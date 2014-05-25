@@ -19,7 +19,7 @@ env.hosts = ['pi@192.168.1.120']
 
 simple_install = True
 
-dirs_to_make        = ['~/src', '~/runtime']
+dirs_to_make        = ['~/src', '~/runtime', '~/runtime/watch']
 things_to_download  = []
 apt_repos           = []
 packages_to_install = ['git',
