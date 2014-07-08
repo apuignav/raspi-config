@@ -158,6 +158,8 @@ if __name__ == '__main__':
     # Write email
     if args.send_email:
         send_email(episodes_destination, show_folder, extras)
+    else:
+        print episodes_destination, show_folder, extras
     # Update xbmc
     if args.update_xbmc:
         update_xbmc()
