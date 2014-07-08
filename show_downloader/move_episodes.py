@@ -144,6 +144,7 @@ if __name__ == '__main__':
     # Determine the final path for the episode
     episodes_destination = find_path_for_episodes(episodes_with_show, show_folder)
     extras = ""
+    to_remove = []
     for origin, dest, _ in episodes_destination['move']:
         try:
             os.system('mv "%s" "%s"' % (origin, dest))
@@ -151,10 +152,13 @@ if __name__ == '__main__':
             # Cleanup
             #os.remove(origin)
             if not os.path.dirname(origin) == downloads_folder: # Means it was a folder
-                shutil.rmtree(os.path.dirname(origin))
+                to_remove.append(os.path.dirname(origin))
         except Exception, e:
             print e
             extras += "Exception moving %s to %s -> %s\n" % (origin, dest, e)
+    # Now remove
+    for folder_to_remove in to_remove:
+        shutil.rmtree(folder_to_remove)
     # Write email
     if args.send_email:
         send_email(episodes_destination, show_folder, extras)
