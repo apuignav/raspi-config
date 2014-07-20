@@ -14,6 +14,16 @@ from argparse import ArgumentParser
 from fuzzywuzzy import process
 
 _allowed_extensions = ['.mkv', '.mp4', '.avi']
+re_tv = re.compile('(.+?)'
+                   '[ .]([Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d))'
+                   '.*?'
+                   '(?:[ .](\d{3}\d?p)|\Z)?')
+
+re_season = re.compile("([Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d))")
+
+# Reasons for failing
+_reasons = {'season': "Couldn't determine season number",
+            'score': "Couldn't determine show name due to low score"}
 
 #get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1].lower().replace(' ', '.') for element in os.listdir(folder)]
 get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1] for element in os.listdir(folder)]
@@ -36,70 +46,82 @@ def get_episodes(folder):
             raise ValueError("Found weird element in directory")
     return episode_list
 
+def analyze_episode(file_name):
+    """Anayze episode to find name, season and episode number."""
+    tv_data = re_tv.match(file_name)
+    if tv_data:
+        return tv_data.group(1).replace(".", " "), tv_data.group(2), tv_data.group(3)
+    return None
+
 def match_episodes(episodes, show_list):
-    """Use fuzzywuzzy.
+    """Use fuzzywuzzy only if needed.
 
     See:
         http://chairnerd.seatgeek.com/fuzzywuzzy-fuzzy-string-matching-in-python/
         https://github.com/seatgeek/fuzzywuzzy
-
+'
     """
-    matches = {}
+    episodes = {'matched': [],
+                'notmatched': []}
     for episode_path in episodes:
         episode = os.path.split(episode_path)[1]
-        matches[episode_path] = process.extractOne(episode, show_list)
-    return matches
+        episode_info = analyze_episode(episode)
+        show_name = None
+        if episode_info:
+            show_name, season, _ = episode_info
+        else:
+            match = re_season.search(episode)
+            if not match:
+                episodes['notmatched'].append((episode_path, 'season'))
+                continue
+            season = int(match.group(1))
+        if not show_name in show_list:
+            extract_res = process.extractOne(episode, show_list, score_cutoff=90)
+            if not extract_res:
+                episodes['notmatched'].append((episode_path, 'score'))
+                continue
+            show_name, _ = extract_res
+        episodes['matched'].append((episode_path, show_name, season))
+    return episodes['matched'], episodes['notmatched']
 
 def find_path_for_episodes(episodes, dest_folder):
     """Find the final path, corresponding to the Season of the show.
 
-    Return {origin: (dest, score)}
+    Return [(origin, dest)]
     """
-    regex = re.compile("[Ss]([0-9][0-9])[Ee][0-9][0-9]")
-    alt_regex = re.compile("([0-9])x[0-9][0-9]") # 1x0Y format
-    alt_alt_regex = re.compile("([0-9])[0-9][0-9]") # Spanish format
-    output = {'move': [], 'keep': []}
-    for episode_path, episode_info in episodes.items():
-        show, score = episode_info
-        match = regex.search(episode_path)
-        if not match:
-            match = alt_regex.search(episode_path)
-            if not match:
-                match = alt_alt_regex.search(episode_path)
-        if score > 70 and match:
-            season = int(match.group(1))
-            final_dir = os.path.join(dest_folder, show, 'Season %s' % season)
-            final_dest = os.path.join(final_dir, os.path.split(episode_path)[1])
-            if not os.path.isdir(final_dir):
-                os.mkdir(final_dir)
-            output['move'].append((episode_path, final_dest, score))
-        else:
-            output['keep'].append((episode_path, show, score))
+    output = []
+    for episode_path, show_name, season in episodes:
+        final_dir = os.path.join(dest_folder, show_name, 'Season %s' % season)
+        final_dest = os.path.join(final_dir, os.path.split(episode_path)[1])
+        if not os.path.isdir(final_dir):
+            os.mkdir(final_dir)
+        output.append((episode_path, final_dest))
     return output
 
-def send_email(result, dest_folder, extras):
+def format_body(dest_folder, episodes_moved, episodes_not_moved, extra_problems):
+    body = "Today I moved the following downloaded files:\n"
+    for origin, dest in episodes_moved:
+        file_name = os.path.split(origin)[1]
+        dest_name = dest.replace(dest_folder, '').replace(file_name, '').lstrip('/')
+        body += "  - '%s' to '%s'\n" % (file_name, dest_name)
+    if episodes_not_moved:
+        body += "\nI didn't move:\n"
+        for file_name, reason in episodes_not_moved:
+            file_name = os.path.split(file_name)[1]
+            body += "  - '%s' because %s\n" % (file_name, _reasons.get(reason, 'of an unknown reason'))
+    if extra_problems:
+        body += "\nIn addition, I had the follwoing problems:\n%s" % '\n'.join(extra_problems)
+    return body
+
+def send_email(body):
     """Summarize run in a nice email."""
     from email.mime.text import MIMEText
     from subprocess import Popen, PIPE
-    # Build message
-    if (not result['move']) and (not extras) and (not result['keep']):
-        return
-    body = "Hola Marta & Albert,\n"
+    text = "Hola Marta & Albert,\n"
     body += "\n"
-    body += "Today I moved the following downloaded files:\n"
-    for origin, dest, score in result['move']:
-        file_name = os.path.split(origin)[1]
-        dest_name = dest.replace(dest_folder, '').replace(file_name, '').lstrip('/')
-        body += "  - '%s' to '%s' with score %s\n" % (file_name, dest_name, score)
-    if result['keep']:
-        body += "\nI didn't move (because I didn't know what to do with them):\n"
-        for origin, dest, score in result['keep']:
-            file_name = os.path.split(origin)[1]
-            body += "  - '%s' to show '%s' with score %s\n" % (file_name, dest, score)
-    if extras:
-        body += "\nIn addition, I had the follwoing problems:\n%s" % extras
-    body += "\n\nSincerely,\nRaspi\n"
-    msg = MIMEText(body)
+    text += body
+    text += "\n\nSincerely,\nRaspi\n"
+    msg = MIMEText(text)
     msg["From"] = "djkarras@gmail.com"
     msg["To"] = "martaetalbert@gmail.com"
     msg["Subject"] = "[Raspi] Shows downloaded"
@@ -140,39 +162,41 @@ if __name__ == '__main__':
     # Get episode list
     episodes = get_episodes(downloads_folder)
     # Find which episode goes where (we get a dict)
-    episodes_with_show = match_episodes(episodes, show_list)
-    # Determine the final path for the episode
+    episodes_with_show, episodes_unmatched = match_episodes(episodes, show_list)
+    # Determine the final path for the episodes that were matched
     episodes_destination = find_path_for_episodes(episodes_with_show, show_folder)
-    extras = ""
-    to_keep = []
-    for origin, _, _ in episodes_destination['keep']:
-        origin_folder = os.path.dirname(origin)
-        if origin_folder != downloads_folder:
-            to_keep.append(origin_folder)
-    to_remove = []
-    for origin, dest, _ in episodes_destination['move']:
+    # Protect folders with non-matched episodes
+    folders_to_protect = set([os.path.dirname(file_name) for file_name, _
+                                                         in episodes_unmatched]+
+                             [downloads_folder])
+    # Move
+    problems = []
+    folders_to_remove = []
+    for origin, dest in episodes_destination:
         try:
             os.system('mv "%s" "%s"' % (origin, dest))
             #shutil.copyfile(origin, dest)
             # Cleanup
             origin_folder = os.path.dirname(origin)
-            if origin_folder == downloads_folder: # Means it was a folder
-                if not origin_folder in to_keep:
-                    to_remove.append(origin_folder)
-        except Exception, e:
-            print e
-            extras += "Exception moving %s to %s -> %s\n" % (origin, dest, e)
+            if not origin_folder in folders_to_remove:
+                folders_to_remove.append(origin_folder)
+        except Exception, exception:
+            print exception
+            problems.append("Exception moving %s to %s -> %s\n" % (origin, dest, exception))
     # Now remove
-    for folder_to_remove in set(to_remove):
-        print "Removing folder", folder_to_remove
-        #shutil.rmtree(folder_to_remove)
-    # Write email
-    if args.send_email:
-        send_email(episodes_destination, show_folder, extras)
-    else:
-        print episodes_destination, show_folder, extras
-    # Update xbmc
-    if args.update_xbmc:
-        update_xbmc()
+    for folder_to_remove in set(folders_to_remove):
+        shutil.rmtree(folder_to_remove)
+    # Format body
+    body = format_body(show_folder, episodes_destination, episodes_unmatched, problems)
+    # Communicate if I did something
+    if episodes_with_show or episodes_unmatched:
+        # Write email
+        if args.send_email:
+            send_email(body)
+        else:
+            print body
+        # Update xbmc
+        if args.update_xbmc:
+            update_xbmc()
 
 # EOF
