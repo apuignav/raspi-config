@@ -66,7 +66,7 @@ def find_path_for_episodes(episodes, dest_folder):
             match = alt_regex.search(episode_path)
             if not match:
                 match = alt_alt_regex.search(episode_path)
-        if score > 50 and match:
+        if score > 70 and match:
             season = int(match.group(1))
             final_dir = os.path.join(dest_folder, show, 'Season %s' % season)
             final_dest = os.path.join(final_dir, os.path.split(episode_path)[1])
@@ -144,21 +144,28 @@ if __name__ == '__main__':
     # Determine the final path for the episode
     episodes_destination = find_path_for_episodes(episodes_with_show, show_folder)
     extras = ""
+    to_keep = []
+    for origin, _, _ in episodes_destination['keep']:
+        origin_folder = os.path.dirname(origin)
+        if origin_folder != downloads_folder:
+            to_keep.append(origin_folder)
     to_remove = []
     for origin, dest, _ in episodes_destination['move']:
         try:
             os.system('mv "%s" "%s"' % (origin, dest))
             #shutil.copyfile(origin, dest)
             # Cleanup
-            #os.remove(origin)
-            if not os.path.dirname(origin) == downloads_folder: # Means it was a folder
-                to_remove.append(os.path.dirname(origin))
+            origin_folder = os.path.dirname(origin)
+            if origin_folder == downloads_folder: # Means it was a folder
+                if not origin_folder in to_keep:
+                    to_remove.append(origin_folder)
         except Exception, e:
             print e
             extras += "Exception moving %s to %s -> %s\n" % (origin, dest, e)
     # Now remove
-    for folder_to_remove in to_remove:
-        shutil.rmtree(folder_to_remove)
+    for folder_to_remove in set(to_remove):
+        print "Removing folder", folder_to_remove
+        #shutil.rmtree(folder_to_remove)
     # Write email
     if args.send_email:
         send_email(episodes_destination, show_folder, extras)
