@@ -15,15 +15,15 @@ from fuzzywuzzy import process
 
 _allowed_extensions = ['.mkv', '.mp4', '.avi']
 re_tv = re.compile('(.+?)'
-                   '[ .]([Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d))'
+                   '[ .][Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)'
                    '.*?'
                    '(?:[ .](\d{3}\d?p)|\Z)?')
 
-re_season = re.compile("([Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d))")
+re_season = re.compile("[Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)")
 
 # Reasons for failing
-_reasons = {'season': "Couldn't determine season number",
-            'score': "Couldn't determine show name due to low score"}
+_reasons = {'season': "I couldn't determine season number",
+            'score': "I couldn't determine show name due to low score"}
 
 #get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1].lower().replace(' ', '.') for element in os.listdir(folder)]
 get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1] for element in os.listdir(folder)]
@@ -61,8 +61,8 @@ def match_episodes(episodes, show_list):
         https://github.com/seatgeek/fuzzywuzzy
 '
     """
-    episodes = {'matched': [],
-                'notmatched': []}
+    episode_matching = {'matched': [],
+                        'notmatched': []}
     for episode_path in episodes:
         episode = os.path.split(episode_path)[1]
         episode_info = analyze_episode(episode)
@@ -72,17 +72,18 @@ def match_episodes(episodes, show_list):
         else:
             match = re_season.search(episode)
             if not match:
-                episodes['notmatched'].append((episode_path, 'season'))
+                episode_matching['notmatched'].append((episode_path, 'season'))
                 continue
-            season = int(match.group(1))
+            season = match.group(1)
+        season = int(season)
         if not show_name in show_list:
             extract_res = process.extractOne(episode, show_list, score_cutoff=90)
             if not extract_res:
-                episodes['notmatched'].append((episode_path, 'score'))
+                episode_matching['notmatched'].append((episode_path, 'score'))
                 continue
             show_name, _ = extract_res
-        episodes['matched'].append((episode_path, show_name, season))
-    return episodes['matched'], episodes['notmatched']
+        episode_matching['matched'].append((episode_path, show_name, season))
+    return episode_matching['matched'], episode_matching['notmatched']
 
 def find_path_for_episodes(episodes, dest_folder):
     """Find the final path, corresponding to the Season of the show.
@@ -175,6 +176,7 @@ if __name__ == '__main__':
     for origin, dest in episodes_destination:
         try:
             os.system('mv "%s" "%s"' % (origin, dest))
+            #print 'mv "%s" "%s"' % (origin, dest)
             #shutil.copyfile(origin, dest)
             # Cleanup
             origin_folder = os.path.dirname(origin)
@@ -185,6 +187,7 @@ if __name__ == '__main__':
             problems.append("Exception moving %s to %s -> %s\n" % (origin, dest, exception))
     # Now remove
     for folder_to_remove in set(folders_to_remove):
+        #print "Remove", folder_to_remove
         shutil.rmtree(folder_to_remove)
     # Format body
     body = format_body(show_folder, episodes_destination, episodes_unmatched, problems)
