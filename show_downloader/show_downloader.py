@@ -8,6 +8,7 @@
 
 from datetime import datetime
 import os
+import string
 from lxml import etree
 import urllib2, socket
 
@@ -30,7 +31,7 @@ def get_info(feed):
         titles = tree.xpath("/rss/channel/item/title[not (contains(., '720p') or contains(., '720P'))]/text()")
         published_dates = tree.xpath("/rss/channel/item/pubDate/text()")
         torrent_files = tree.xpath("/rss/channel/item/link[not (contains(., '720p') or contains(., '720P'))]/text()")
-        return [(str(titles[i]),
+        return [(filter(lambda x: x in string.printable, titles[i]),
                  datetime.strptime(published_dates[i], '%a, %d %b %Y %H:%M:%S +0000'),
                  str(torrent_files[i])) for i in range(len(titles))]
     except (etree.XMLSyntaxError, urllib2.URLError, socket.timeout), error:
