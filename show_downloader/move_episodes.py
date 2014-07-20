@@ -180,7 +180,7 @@ if __name__ == '__main__':
             #shutil.copyfile(origin, dest)
             # Cleanup
             origin_folder = os.path.dirname(origin)
-            if not origin_folder in folders_to_remove:
+            if not origin_folder in folders_to_protect:
                 folders_to_remove.append(origin_folder)
         except Exception, exception:
             print exception
