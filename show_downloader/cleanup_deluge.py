@@ -38,17 +38,20 @@ def cleanup(delete_fastresume=True):
     state_file = os.path.join(state_folder, 'torrents.state')
     state = load(state_file)
     finished_torrents = [torrent for torrent in state.torrents if torrent.is_finished]
-    for torrent in finished_torrents:
-        torrent_file = os.path.join(state_folder, '%s.torrent' % torrent.torrent_id)
-        if not os.path.exists:
-            raise OSError("Cannot find torrent file -> %s" % torrent_file)
-        os.remove(torrent_file)
-    state.torrents = [torrent for torrent in state.torrents if not torrent.is_finished]
-    write(state_file, state)
-    if delete_fastresume:
-        fastresume_file = os.path.join(state_folder, 'torrents.fastresume')
-        os.remove(fastresume_file)
-    return len(finished_torrents)
+    num_finished_torrents = len(finished_torrents)
+    if num_finished_torrents != 0:
+        for torrent in finished_torrents:
+            torrent_file = os.path.join(state_folder, '%s.torrent' % torrent.torrent_id)
+            if not os.path.exists:
+                raise OSError("Cannot find torrent file -> %s" % torrent_file)
+            os.remove(torrent_file)
+        state.torrents = [torrent for torrent in state.torrents if not torrent.is_finished]
+        write(state_file, state)
+        if delete_fastresume:
+            fastresume_file = os.path.join(state_folder, 'torrents.fastresume')
+            if os.path.exists(fastresume_file):
+                os.remove(fastresume_file)
+    return num_finished_torrents
 
 if __name__ == '__main__':
     cleaned_files = cleanup()
