@@ -9,13 +9,14 @@
 
 import os
 
+from RunCommand import run_command
 from PickleFile import load, write
 
 config_folder = '/home/pi/.config/deluge/'
 
 def stop_deluge():
     """Stop deluge."""
-    os.system('sudo stop deluge')
+    run_command('sudo', 'stop', 'deluge')
 
 def cleanup(delete_fastresume=True):
     """Cleanup deluge before moving torrent files.
