@@ -14,6 +14,13 @@ from argparse import ArgumentParser
 from fuzzywuzzy import process
 
 from cleanup_deluge import cleanup
+from RunCommand import run_command
+
+# Deluge stuff
+
+def is_deluge_running():
+    status = run_command('sudo', 'status', 'deluge')
+    return not 'stop' in status.lower()
 
 _allowed_extensions = ['.mkv', '.mp4', '.avi']
 re_tv = re.compile('(.+?)'
@@ -154,7 +161,8 @@ if __name__ == '__main__':
     parser.add_argument('downloads_folder', action='store', type=str)
     parser.add_argument('shows_folder', action='store', type=str)
     args = parser.parse_args()
-    # Cleanup deluge
+    # Get deluge situation, stop and clean
+    was_deluge_running = is_deluge_running()
     cleanup()
     # Check folders
     if not os.path.isdir(args.downloads_folder):
@@ -194,6 +202,9 @@ if __name__ == '__main__':
     for folder_to_remove in set(folders_to_remove):
         #print "Remove", folder_to_remove
         shutil.rmtree(folder_to_remove)
+    # Put deluge in previous status
+    if was_deluge_running:
+        run_command('sudo', 'start', 'deluge')
     # Format body
     body = format_body(show_folder, episodes_destination, episodes_unmatched, problems)
     # Communicate if I did something
