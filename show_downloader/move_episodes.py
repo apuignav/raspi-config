@@ -20,7 +20,7 @@ from RunCommand import run_command
 
 def is_deluge_running():
     status = run_command('sudo', 'status', 'deluge')
-    return not 'stop' in status.lower()
+    return not 'stop' in status[0].lower()
 
 _allowed_extensions = ['.mkv', '.mp4', '.avi']
 re_tv = re.compile('(.+?)'
