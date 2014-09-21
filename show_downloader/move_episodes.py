@@ -13,6 +13,8 @@ from argparse import ArgumentParser
 
 from fuzzywuzzy import process
 
+from cleanup_deluge import cleanup
+
 _allowed_extensions = ['.mkv', '.mp4', '.avi']
 re_tv = re.compile('(.+?)'
                    '[ .][Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)'
@@ -152,6 +154,8 @@ if __name__ == '__main__':
     parser.add_argument('downloads_folder', action='store', type=str)
     parser.add_argument('shows_folder', action='store', type=str)
     args = parser.parse_args()
+    # Cleanup deluge
+    cleanup()
     # Check folders
     if not os.path.isdir(args.downloads_folder):
         raise ValueError("Downloads folder does not exist!")
