@@ -37,7 +37,8 @@ def get_episodes(folder):
         if os.path.isfile(element):
             # Is file
             if os.path.splitext(element)[1].lower() in _allowed_extensions:
-                episode_list.append(element)
+                if not 'sample' in element.lower():
+                    episode_list.append(element)
         elif os.path.isdir(element):
             # Is folder
             episode_list.extend(get_episodes(element))
@@ -77,7 +78,7 @@ def match_episodes(episodes, show_list):
             season = match.group(1)
         season = int(season)
         if not show_name in show_list:
-            extract_res = process.extractOne(episode, show_list, score_cutoff=90)
+            extract_res = process.extractOne(episode, show_list, score_cutoff=85)
             if not extract_res:
                 episode_matching['notmatched'].append((episode_path, 'score'))
                 continue
