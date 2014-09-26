@@ -43,7 +43,7 @@ def cleanup(delete_fastresume=True):
     if num_finished_torrents != 0:
         for torrent in finished_torrents:
             torrent_file = os.path.join(state_folder, '%s.torrent' % torrent.torrent_id)
-            if not os.path.exists:
+            if not os.path.exists(torrent_file):
                 raise OSError("Cannot find torrent file -> %s" % torrent_file)
             os.remove(torrent_file)
         state.torrents = [torrent for torrent in state.torrents if not torrent.is_finished]
