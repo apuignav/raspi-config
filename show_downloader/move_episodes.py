@@ -34,7 +34,6 @@ re_season = re.compile("[Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)")
 _reasons = {'season': "I couldn't determine season number",
             'score': "I couldn't determine show name due to low score"}
 
-#get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1].lower().replace(' ', '.') for element in os.listdir(folder)]
 get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1] for element in os.listdir(folder)]
 
 def get_episodes(folder):
@@ -84,7 +83,7 @@ def match_episodes(episodes, show_list):
             if not match:
                 episode_matching['notmatched'].append((episode_path, 'season'))
                 continue
-            season = match.group(1)
+            season = next((val for val in match.groups()[::2] if val), None)
         season = int(season)
         if not show_name in show_list:
             extract_res = process.extractOne(episode, show_list, score_cutoff=85)
