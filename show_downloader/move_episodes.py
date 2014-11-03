@@ -86,7 +86,8 @@ def match_episodes(episodes, show_list):
             season = next((val for val in match.groups()[::2] if val), None)
         season = int(season)
         if not show_name in show_list:
-            extract_res = process.extractOne(episode, show_list, score_cutoff=85)
+            extract_res = process.extractOne(episode.replace('.', ' ').replace('_', ' '),
+                                             show_list, score_cutoff=85)
             if not extract_res:
                 episode_matching['notmatched'].append((episode_path, 'score'))
                 continue
