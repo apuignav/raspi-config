@@ -163,7 +163,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # Get deluge situation, stop and clean
     was_deluge_running = is_deluge_running()
-    cleanup()
+    cleanup(raise_on_fail=False)
     # Check folders
     if not os.path.isdir(args.downloads_folder):
         raise ValueError("Downloads folder does not exist!")
