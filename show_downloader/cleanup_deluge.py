@@ -18,7 +18,7 @@ def stop_deluge():
     """Stop deluge."""
     run_command('sudo', 'stop', 'deluge')
 
-def cleanup(delete_fastresume=True):
+def cleanup(delete_fastresume=True, raise_on_fail=True):
     """Cleanup deluge before moving torrent files.
 
     1) Load the torrents.state file
@@ -27,6 +27,7 @@ def cleanup(delete_fastresume=True):
     4) Save modified torrents.state.
 
     :param bool delete_fastresume: Delete torrents.fastresume file?
+    :param bool raise_on_fail: Raise exception if torrent file is not found.
 
     :returns: Number of deleted torrents.
     :rtype: int
@@ -44,8 +45,10 @@ def cleanup(delete_fastresume=True):
         for torrent in finished_torrents:
             torrent_file = os.path.join(state_folder, '%s.torrent' % torrent.torrent_id)
             if not os.path.exists(torrent_file):
-                raise OSError("Cannot find torrent file -> %s" % torrent_file)
-            os.remove(torrent_file)
+                if raise_on_fail:
+                    raise OSError("Cannot find torrent file -> %s" % torrent_file)
+            else:
+                os.remove(torrent_file)
         state.torrents = [torrent for torrent in state.torrents if not torrent.is_finished]
         write(state_file, state)
         if delete_fastresume:
