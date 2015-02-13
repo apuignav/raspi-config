@@ -14,11 +14,16 @@ from PickleFile import load, write
 
 config_folder = '/home/pi/.config/deluge/'
 
+
+def start_deluge():
+    """Start deluge."""
+    run_command('sudo', 'start', 'deluge')
+
 def stop_deluge():
     """Stop deluge."""
     run_command('sudo', 'stop', 'deluge')
 
-def cleanup(delete_fastresume=True, raise_on_fail=True):
+def cleanup(delete_fastresume=True, raise_on_fail=True, restart=False):
     """Cleanup deluge before moving torrent files.
 
     1) Load the torrents.state file
@@ -55,6 +60,8 @@ def cleanup(delete_fastresume=True, raise_on_fail=True):
             fastresume_file = os.path.join(state_folder, 'torrents.fastresume')
             if os.path.exists(fastresume_file):
                 os.remove(fastresume_file)
+    if restart:
+        start_deluge()
     return num_finished_torrents
 
 if __name__ == '__main__':
