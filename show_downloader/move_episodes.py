@@ -124,6 +124,11 @@ def format_body(dest_folder, episodes_moved, episodes_not_moved, extra_problems)
         body += "\nIn addition, I had the follwoing problems:\n%s" % '\n'.join(extra_problems)
     return body
 
+def send_push(body):
+    from pibullet.device import Device
+    myself = Device(os.path.expanduser('~/.pibullet'))
+    myself.notify('Raspi digest', body)
+
 def send_email(body):
     """Summarize run in a nice email."""
     from email.mime.text import MIMEText
@@ -137,7 +142,7 @@ def send_email(body):
     msg["To"] = "martaetalbert@gmail.com"
     msg["Subject"] = "[Raspi] Shows downloaded"
     p = Popen(["/usr/sbin/sendmail", "-toi"], stdin=PIPE)
-    p.communicate(msg.as_string())
+    p.communicate(msg.)s_string())
 
 def update_xbmc():
     """Update the XBMC video library."""
@@ -158,6 +163,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--update-xbmc', action='store_true')
     parser.add_argument('--send-email', action='store_true')
+    parser.add_argument('--send-push', action='store_true')
     parser.add_argument('downloads_folder', action='store', type=str)
     parser.add_argument('shows_folder', action='store', type=str)
     args = parser.parse_args()
@@ -214,6 +220,8 @@ if __name__ == '__main__':
             send_email(body)
         else:
             print body
+        if args.send_push:
+            send_push(body)
         # Update xbmc
         if args.update_xbmc:
             update_xbmc()

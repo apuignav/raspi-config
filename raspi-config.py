@@ -35,6 +35,7 @@ packages_to_install = ['git',
                        'curl',
                        'nmon',
                        'deluge-console',
+                       # 'beautifulsoup',
                        #'iotop',
                       ]
 # For psutil
@@ -44,6 +45,8 @@ easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuz
                        "xbmc-json",
                        "validictory",
                        "pebble",
+                       "python-Levenshtein",
+                       '"git+git://github.com/apuignav/pibullet.git"',
                        #"psutil",
                        ]
 git_repositories    = ['https://github.com/MilhouseVH/bcmstat.git',
@@ -70,8 +73,8 @@ if not simple_install:
 def deploy_ssh(remove_banner=True):
     with settings(warn_only=True):
         # Remove annoying Debian banner
-        if remove_banner and file_exists("/etc/motd"):
-            sudo("mv /etc/motd /etc/motd.bak")
+        if remove_banner:
+            run('touch $HOME/.hushlogin')
         # Add our public keys
         if not dir_exists('~/.ssh'):
             for host in env.hosts:
