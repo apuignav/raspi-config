@@ -142,7 +142,7 @@ def send_email(body):
     msg["To"] = "martaetalbert@gmail.com"
     msg["Subject"] = "[Raspi] Shows downloaded"
     p = Popen(["/usr/sbin/sendmail", "-toi"], stdin=PIPE)
-    p.communicate(msg.)s_string())
+    p.communicate(msg.as_string())
 
 def update_xbmc():
     """Update the XBMC video library."""
