@@ -84,9 +84,10 @@ def match_episodes(episodes, show_list):
                 episode_matching['notmatched'].append((episode_path, 'season'))
                 continue
             season = next((val for val in match.groups()[::2] if val), None)
+            show_name = episode
         season = int(season)
         if not show_name in show_list:
-            extract_res = process.extractOne(episode.replace('.', ' ').replace('_', ' '),
+            extract_res = process.extractOne(show_name.replace('.', ' ').replace('_', ' '),
                                              show_list, score_cutoff=85)
             if not extract_res:
                 episode_matching['notmatched'].append((episode_path, 'score'))
@@ -218,10 +219,9 @@ if __name__ == '__main__':
         # Write email
         if args.send_email:
             send_email(body)
+            send_push(body)
         else:
             print body
-        if args.send_push:
-            send_push(body)
         # Update xbmc
         if args.update_xbmc:
             update_xbmc()
