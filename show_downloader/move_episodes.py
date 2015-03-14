@@ -24,7 +24,7 @@ def is_deluge_running():
 
 _allowed_extensions = ['.mkv', '.mp4', '.avi']
 re_tv = re.compile('(.+?)'
-                   '[ .][Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)'
+                   '[ .][Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d\d?)(\d\d)'
                    '.*?'
                    '(?:[ .](\d{3}\d?p)|\Z)?')
 
