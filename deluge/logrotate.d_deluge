@@ -7,7 +7,7 @@
         delaycompress
         sharedscripts
         postrotate
-                initctl restart deluged >/dev/null 2>&1 || true
-                initctl restart deluge-web >/dev/null 2>&1 || true
+                systemctl restart deluged >/dev/null 2>&1 || true
+                systemctl restart deluge-web >/dev/null 2>&1 || true
         endscript
 }
