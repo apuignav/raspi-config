@@ -1,12 +1,11 @@
 [Unit]
 Description=Deluge Bittorrent Client Daemon
 After=network-online.target
-Wants=deluge-web.target
 
 [Service]
 Type=simple
-User=deluge
-Group=deluge
+User=osmc
+Group=osmc
 UMask=007
 
 ExecStart=/usr/bin/deluged -d -l /var/log/deluge/daemon.log -L info

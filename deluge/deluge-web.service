@@ -1,12 +1,14 @@
 [Unit]
 Description=Deluge Bittorrent Client Web Interface
 After=network-online.target
+After=deluged.service
+Wants=deluged.service
 
 [Service]
 Type=simple
 
-User=deluge
-Group=deluge
+User=osmc
+Group=osmc
 UMask=027
 
 ExecStart=/usr/bin/deluge-web -l /var/log/deluge/web.log -L warning
