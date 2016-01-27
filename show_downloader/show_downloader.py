@@ -100,5 +100,6 @@ def download_shows(feed_list):
 
 if __name__ == '__main__':
     download_shows("http://showrss.info/rss.php?user_id=166686&hd=null&proper=null&magnets=false")
+    download_shows("http://showrss.info/user/15673.rss?magnets=false&namespaces=true&name=null&quality=null&re=null")
 
 # EOF
