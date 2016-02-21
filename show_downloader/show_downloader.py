@@ -68,11 +68,13 @@ def download_torrent(torrent_file):
         return False
     return True
 
-def download_shows(feed_list):
+def download_shows(feed_list, accept_fail):
     """Download shows from feeds.
 
     @arg  feeds: list of feeds
     @type feeds: list (or str)
+    @arg  accept_fail: accept failed shows as downloaded
+    @type accept_fail: bool
 
     """
 
@@ -91,7 +93,7 @@ def download_shows(feed_list):
             if episode in cache: # Already downloaded
                 continue
             sc = download_torrent(torrent_file)
-            if not sc:
+            if not accept_fail and not sc:
                 print "Problems downloading %s" % episode
             else:
                 cache.add(episode, episode_date)
@@ -99,7 +101,12 @@ def download_shows(feed_list):
     PickleFile.write(cache_file, cache)
 
 if __name__ == '__main__':
-    download_shows("http://showrss.info/rss.php?user_id=166686&hd=null&proper=null&magnets=false")
-    download_shows("http://showrss.info/user/15673.rss?magnets=false&namespaces=true&name=null&quality=null&re=null")
+    import sys
+    accept_fail = False
+    if len(sys.argv) > 1:
+        if '--accept-failures' in sys.argv[1:]:
+            accept_fail = True
+    download_shows("http://showrss.info/user/15673.rss?magnets=false&namespaces=true&name=null&quality=null&re=null",
+                   accept_fail)
 
 # EOF
