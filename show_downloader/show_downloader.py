@@ -2,18 +2,26 @@
 # =============================================================================
 # @file   show_downloader.py
 # @author Albert Puig (albert.puig@epfl.ch)
-# @date   09.02.2014
+# @date   05.03.2016
 # =============================================================================
-""""""
+"""Add magnet links to Deluge."""
 
 from datetime import datetime
 import os
 import string
+import subprocess
+import urllib2
+import socket
+import argparse
+
 from lxml import etree
-import urllib2, socket
 
 from Containers import TimedDict
 import PickleFile
+
+
+PROPER_WORDS = ["PROPER", "REPACK"]
+
 
 def get_info(feed):
     """Get title, published date and torrent of shows from feed.
@@ -38,8 +46,34 @@ def get_info(feed):
         print 'Service Unavailable -> %s' % error
         return []
 
+
+def sanitize_feed(feed_list):
+    """Remove duplicate episodes due to REPACK and PROPER.
+
+    @arg  feed_list: episodes found
+    @type feed_list: list of tuples, output of get_info
+
+    @return: list of tuples (title, date, torrent file)
+
+    """
+    # Find shows that have been uploaded twice
+    repacked_episodes = []
+    for show_title, _, _ in feed_list:
+        for proper_word in PROPER_WORDS:
+            if proper_word in show_title:
+                repacked_episodes.append(show_title.replace(proper_word, '').strip())
+    final_list = []
+    for show_title, date, magnet in feed_list:
+        if show_title not in repacked_episodes:
+            final_list.append((show_title, date, magnet))
+    return final_list
+
+
 def download_torrent(torrent_file):
-    """Download the torrent in ~/runtime/watch.
+    """Get the torrent.
+
+    If it's a magnet link, add it to deluge, otherwise
+    download it to ~/runtime/watch.
 
     @arg  torrent_file: torrent to download
     @type torrent_file: str
@@ -49,32 +83,40 @@ def download_torrent(torrent_file):
     @return: boolean upon success/failure
 
     """
-
-    file_name = os.path.split(torrent_file)[1]
-    dest_file = os.path.join(os.environ['HOME'], 'runtime', 'watch', file_name)
-    if not os.path.exists(os.path.split(dest_file)[0]):
-        print "Folder doesn't exist -> %s" % dest_file
-        return False
-    if os.path.exists(dest_file):
-        print "Destination torrent already exists -> %s" % dest_file
-        return False
-    try:
-        torrent = urllib2.urlopen(torrent_file, timeout=30)
-        output = open(dest_file, 'wb')
-        output.write(torrent.read())
-        output.close()
-    except Exception, e:
-        print "Problem downloading %s -> %s" % (dest_file, e)
-        return False
+    if torrent_file.startswith("magnet:"):  # Magnet!!
+        command = ["deluge-console", "add", torrent_file]
+        with open(os.devnull, 'wb') as devnull:
+            if subprocess.call(command, stdout=devnull, stderr=devnull):
+                return False
+    else:
+        file_name = os.path.split(torrent_file)[1]
+        dest_file = os.path.join(os.environ['HOME'], 'runtime', 'watch', file_name)
+        if not os.path.exists(os.path.split(dest_file)[0]):
+            print "Folder doesn't exist -> %s" % dest_file
+            return False
+        if os.path.exists(dest_file):
+            print "Destination torrent already exists -> %s" % dest_file
+            return False
+        try:
+            torrent = urllib2.urlopen(torrent_file, timeout=30)
+            output = open(dest_file, 'wb')
+            output.write(torrent.read())
+            output.close()
+        except Exception, e:
+            print "Problem downloading %s -> %s" % (dest_file, e)
+            return False
     return True
 
-def download_shows(feed_list, accept_fail):
+
+def download_shows(feed_list, accept_fail, download):
     """Download shows from feeds.
 
     @arg  feeds: list of feeds
     @type feeds: list (or str)
     @arg  accept_fail: accept failed shows as downloaded
     @type accept_fail: bool
+    @arg  download: download?
+    @type download: bool
 
     """
 
@@ -85,14 +127,17 @@ def download_shows(feed_list, accept_fail):
     if os.path.exists(cache_file):
         cache = PickleFile.load(cache_file)
     for feed in feed_list:
-        feed_info = get_info(feed)
+        feed_info = sanitize_feed(get_info(feed))
         for episode, episode_date, torrent_file in feed_info:
             #print episode
             if (datetime.today() - episode_date).days > 3*7: # Too old!
                 continue
             if episode in cache: # Already downloaded
                 continue
-            sc = download_torrent(torrent_file)
+            if download:
+                sc = download_torrent(torrent_file)
+            else:
+                sc = True
             if not accept_fail and not sc:
                 print "Problems downloading %s" % episode
             else:
@@ -100,13 +145,14 @@ def download_shows(feed_list, accept_fail):
     cache.delete_expired()
     PickleFile.write(cache_file, cache)
 
+
 if __name__ == '__main__':
-    import sys
-    accept_fail = False
-    if len(sys.argv) > 1:
-        if '--accept-failures' in sys.argv[1:]:
-            accept_fail = True
-    download_shows("http://showrss.info/user/15673.rss?magnets=false&namespaces=true&name=null&quality=null&re=null",
-                   accept_fail)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--accept-failures', action='store_true')
+    parser.add_argument('--no-download', action='store_true')
+    args = parser.parse_args()
+    download_shows("http://showrss.info/user/15673.rss?magnets=true&namespaces=true&name=clean&quality=null&re=null",
+                   args.accept_failures,
+                   not args.no_download)
 
 # EOF
