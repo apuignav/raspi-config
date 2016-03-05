@@ -12,7 +12,7 @@ import os
 from RunCommand import run_command
 from PickleFile import load, write
 
-config_folder = '/home/pi/.config/deluge/'
+config_folder = os.path.expandvars('$HOME/.config/deluge/')
 
 
 def start_deluge():
