@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # =============================================================================
-# @file   cleanup_deluge.py
+# @file   delugectl.py
 # @author Albert Puig (albert.puig@cern.ch)
 # @date   21.09.2014
 # =============================================================================
-"""Cleanup deluge of finished torrents."""
+"""Manage deluge."""
 
 import os
-
-import logging
 
 from RunCommand import run_command
 from PickleFile import load, write
 
 config_folder = os.path.expandvars('$HOME/.config/deluge/')
 
+
+def is_deluge_running():
+    """Is deluge running?"""
+    return 'running' in run_command('sudo', 'systemctl', 'status', 'deluged')[2]
 
 def start_deluge():
     """Start deluge."""
@@ -25,7 +27,7 @@ def stop_deluge():
     """Stop deluge."""
     run_command('sudo', 'systemctl', 'stop', 'deluged', 'deluge-web')
 
-def cleanup(delete_fastresume=True, raise_on_fail=True, restart=False):
+def cleanup_torrents(delete_fastresume=True, raise_on_fail=True, restart=False):
     """Cleanup deluge before moving torrent files.
 
     1) Load the torrents.state file
@@ -46,7 +48,7 @@ def cleanup(delete_fastresume=True, raise_on_fail=True, restart=False):
     state_folder = os.path.join(config_folder, 'state')
     state_file = os.path.join(state_folder, 'torrents.state')
     state = load(state_file)
-    # print 'Torrents' 
+    # print 'Torrents'
     # for torrent in state.torrents:
     #     print torrent, torrent.is_finished
     finished_torrents = [torrent for torrent in state.torrents if torrent.is_finished]
@@ -70,7 +72,7 @@ def cleanup(delete_fastresume=True, raise_on_fail=True, restart=False):
     return num_finished_torrents
 
 if __name__ == '__main__':
-    cleaned_files = cleanup()
+    cleaned_files = cleanup_torrents()
     print "I cleaned %s files" % cleaned_files
 
 

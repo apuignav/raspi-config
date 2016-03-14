@@ -13,28 +13,24 @@ from argparse import ArgumentParser
 
 from fuzzywuzzy import process
 
-from cleanup_deluge import cleanup, start_deluge
-from RunCommand import run_command
+from delugectl import cleanup_torrents, start_deluge, is_deluge_running
 
 # Deluge stuff
 
-def is_deluge_running():
-    status = run_command('sudo', 'status', 'deluge')
-    return not 'stop' in status[0].lower()
-
 _allowed_extensions = ['.mkv', '.mp4', '.avi']
-re_tv = re.compile('(.+?)'
-                   '[ .][Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d\d?)(\d\d)'
-                   '.*?'
-                   '(?:[ .](\d{3}\d?p)|\Z)?')
+re_tv = re.compile(r'(.+?)'
+                   r'[ .][Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d\d?)(\d\d)'
+                   r'.*?'
+                   r'(?:[ .](\d{3}\d?p)|\Z)?')
 
-re_season = re.compile("[Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)")
+re_season = re.compile(r"[Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)")
 
 # Reasons for failing
 _reasons = {'season': "I couldn't determine season number",
             'score': "I couldn't determine show name due to low score"}
 
-get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1] for element in os.listdir(folder)]
+get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1]
+                                for element in os.listdir(folder)]
 
 def get_episodes(folder):
     """Walk through episodes, also taking into account folders."""
@@ -68,7 +64,7 @@ def match_episodes(episodes, show_list):
     See:
         http://chairnerd.seatgeek.com/fuzzywuzzy-fuzzy-string-matching-in-python/
         https://github.com/seatgeek/fuzzywuzzy
-'
+
     """
     episode_matching = {'matched': [],
                         'notmatched': []}
@@ -120,7 +116,8 @@ def format_body(dest_folder, episodes_moved, episodes_not_moved, extra_problems)
         body += "\nI didn't move:\n"
         for file_name, reason in episodes_not_moved:
             file_name = os.path.split(file_name)[1]
-            body += "  - '%s' because %s\n" % (file_name, _reasons.get(reason, 'of an unknown reason'))
+            body += "  - '%s' because %s\n" % (file_name,
+                                               _reasons.get(reason, 'of an unknown reason'))
     if extra_problems:
         body += "\nIn addition, I had the follwoing problems:\n%s" % '\n'.join(extra_problems)
     return body
@@ -170,7 +167,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # Get deluge situation, stop and clean
     was_deluge_running = is_deluge_running()
-    cleanup(raise_on_fail=False)
+    cleanup_torrents(raise_on_fail=False)
     # Check folders
     if not os.path.isdir(args.downloads_folder):
         raise ValueError("Downloads folder does not exist!")
@@ -187,8 +184,8 @@ if __name__ == '__main__':
     # Determine the final path for the episodes that were matched
     episodes_destination = find_path_for_episodes(episodes_with_show, show_folder)
     # Protect folders with non-matched episodes
-    folders_to_protect = set([os.path.dirname(file_name) for file_name, _
-                                                         in episodes_unmatched]+
+    folders_to_protect = set([os.path.dirname(file_name)
+                              for file_name, _ in episodes_unmatched] +
                              [downloads_folder])
     # Move
     problems = []
