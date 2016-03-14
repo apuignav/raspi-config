@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 
 from fuzzywuzzy import process
 
-from cleanup_deluge import cleanup
+from cleanup_deluge import cleanup, start_deluge
 from RunCommand import run_command
 
 # Deluge stuff
@@ -211,7 +211,7 @@ if __name__ == '__main__':
         shutil.rmtree(folder_to_remove)
     # Put deluge in previous status
     if was_deluge_running:
-        run_command('sudo', 'start', 'deluge')
+        start_deluge()
     # Format body
     body = format_body(show_folder, episodes_destination, episodes_unmatched, problems)
     # Communicate if I did something
