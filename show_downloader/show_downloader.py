@@ -128,12 +128,17 @@ def download_shows(feed_list, accept_fail, download):
         cache = PickleFile.load(cache_file)
     for feed in feed_list:
         feed_info = sanitize_feed(get_info(feed))
+        # print 'Today is', datetime.today()
+        # print 'Initial cache'
+        # for key in cache:
+        #    print ' -', key
         for episode, episode_date, torrent_file in feed_info:
-            #print episode
+            # print 'Working with', episode, episode_date
             if (datetime.today() - episode_date).days > 3*7: # Too old!
                 continue
             if episode in cache: # Already downloaded
                 continue
+            # print 'Downloading?', download
             if download:
                 sc = download_torrent(torrent_file)
             else:
@@ -142,7 +147,13 @@ def download_shows(feed_list, accept_fail, download):
                 print "Problems downloading %s" % episode
             else:
                 cache.add(episode, episode_date)
+    # print 'Cache before deleting expired'
+    # for key in cache:
+    #    print ' -', key
     cache.delete_expired()
+    # print 'Final cache'
+    # for key in cache:
+    #    print ' -', key
     PickleFile.write(cache_file, cache)
 
 

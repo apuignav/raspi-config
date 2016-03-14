@@ -9,6 +9,8 @@
 
 import os
 
+import logging
+
 from RunCommand import run_command
 from PickleFile import load, write
 
@@ -17,11 +19,11 @@ config_folder = os.path.expandvars('$HOME/.config/deluge/')
 
 def start_deluge():
     """Start deluge."""
-    run_command('sudo', 'start', 'deluge')
+    run_command('sudo', 'systemctl', 'start', 'deluged', 'deluge-web')
 
 def stop_deluge():
     """Stop deluge."""
-    run_command('sudo', 'stop', 'deluge')
+    run_command('sudo', 'systemctl', 'stop', 'deluged', 'deluge-web')
 
 def cleanup(delete_fastresume=True, raise_on_fail=True, restart=False):
     """Cleanup deluge before moving torrent files.
@@ -44,6 +46,9 @@ def cleanup(delete_fastresume=True, raise_on_fail=True, restart=False):
     state_folder = os.path.join(config_folder, 'state')
     state_file = os.path.join(state_folder, 'torrents.state')
     state = load(state_file)
+    # print 'Torrents' 
+    # for torrent in state.torrents:
+    #     print torrent, torrent.is_finished
     finished_torrents = [torrent for torrent in state.torrents if torrent.is_finished]
     num_finished_torrents = len(finished_torrents)
     if num_finished_torrents != 0:
