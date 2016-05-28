@@ -13,12 +13,12 @@ import subprocess
 import urllib2
 import socket
 import argparse
+import logging
 
 from lxml import etree
 
 from Containers import TimedDict
 import PickleFile
-
 
 PROPER_WORDS = ["PROPER", "REPACK"]
 
@@ -43,7 +43,7 @@ def get_info(feed):
                  datetime.strptime(published_dates[i], '%a, %d %b %Y %H:%M:%S +0000'),
                  str(torrent_files[i])) for i in range(len(titles))]
     except (etree.XMLSyntaxError, urllib2.URLError, socket.timeout), error:
-        print 'Service Unavailable -> %s' % error
+        logging.critical('Service Unavailable -> %s', error)
         return []
 
 
@@ -86,16 +86,18 @@ def download_torrent(torrent_file):
     if torrent_file.startswith("magnet:"):  # Magnet!!
         command = ["deluge-console", "add", torrent_file]
         with open(os.devnull, 'wb') as devnull:
-            if subprocess.call(command, stdout=devnull, stderr=devnull):
+            #if subprocess.call(command, stdout=devnull, stderr=devnull):
+            logging.debug(' Adding magnet with command %s', command)
+            if subprocess.call(command, stderr=devnull):
                 return False
     else:
         file_name = os.path.split(torrent_file)[1]
         dest_file = os.path.join(os.environ['HOME'], 'runtime', 'watch', file_name)
         if not os.path.exists(os.path.split(dest_file)[0]):
-            print "Folder doesn't exist -> %s" % dest_file
+            logging.error("Folder doesn't exist -> %s", dest_file)
             return False
         if os.path.exists(dest_file):
-            print "Destination torrent already exists -> %s" % dest_file
+            logging.warning("Destination torrent already exists -> %s", dest_file)
             return False
         try:
             torrent = urllib2.urlopen(torrent_file, timeout=30)
@@ -103,7 +105,7 @@ def download_torrent(torrent_file):
             output.write(torrent.read())
             output.close()
         except Exception, e:
-            print "Problem downloading %s -> %s" % (dest_file, e)
+            logging.error("Problem downloading %s -> %s", dest_file, e)
             return False
     return True
 
@@ -133,18 +135,21 @@ def download_shows(feed_list, accept_fail, download):
         # for key in cache:
         #    print ' -', key
         for episode, episode_date, torrent_file in feed_info:
-            # print 'Working with', episode, episode_date
+            logging.debug('Found episode: %s %s', episode, torrent_file)
             if (datetime.today() - episode_date).days > 3*7: # Too old!
+                logging.debug(' Too old')
                 continue
             if episode in cache: # Already downloaded
+                logging.debug(' Already downloaded')
                 continue
             # print 'Downloading?', download
             if download:
+                logging.debug( ' Downloading!')
                 sc = download_torrent(torrent_file)
             else:
                 sc = True
             if not accept_fail and not sc:
-                print "Problems downloading %s" % episode
+                logging.error("Problems downloading %s", episode)
             else:
                 cache.add(episode, episode_date)
     # print 'Cache before deleting expired'
@@ -158,10 +163,17 @@ def download_shows(feed_list, accept_fail, download):
 
 
 if __name__ == '__main__':
+    # Parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--accept-failures', action='store_true')
     parser.add_argument('--no-download', action='store_true')
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
+    # Logging
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s : %(message)s')
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
     download_shows("http://showrss.info/user/15673.rss?magnets=true&namespaces=true&name=clean&quality=null&re=null",
                    args.accept_failures,
                    not args.no_download)
