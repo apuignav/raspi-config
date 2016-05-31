@@ -171,7 +171,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # Logging
     logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s : %(message)s')
+                        format='%(asctime)s : %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
     download_shows("http://showrss.info/user/15673.rss?magnets=true&namespaces=true&name=clean&quality=null&re=null",
