@@ -18,11 +18,13 @@ import logging
 from lxml import etree
 
 from Containers import TimedDict
+from retry import retry
 import PickleFile
 
 PROPER_WORDS = ["PROPER", "REPACK"]
 
 
+@retry((urllib2.URLError, socket.timeout), tries=3, delay=10, backoff=2)
 def get_info(feed):
     """Get title, published date and torrent of shows from feed.
 
@@ -42,8 +44,8 @@ def get_info(feed):
         return [(filter(lambda x: x in string.printable, titles[i]),
                  datetime.strptime(published_dates[i], '%a, %d %b %Y %H:%M:%S +0000'),
                  str(torrent_files[i])) for i in range(len(titles))]
-    except (etree.XMLSyntaxError, urllib2.URLError, socket.timeout), error:
-        logging.critical('Service Unavailable -> %s', error)
+    except etree.XMLSyntaxError, error:
+        logging.critical('XML error -> %s', error)
         return []
 
 
