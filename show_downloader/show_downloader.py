@@ -88,9 +88,9 @@ def download_torrent(torrent_file):
     if torrent_file.startswith("magnet:"):  # Magnet!!
         command = ["deluge-console", "add", torrent_file]
         with open(os.devnull, 'wb') as devnull:
-            #if subprocess.call(command, stdout=devnull, stderr=devnull):
             logging.debug(' Adding magnet with command %s', command)
-            if subprocess.call(command, stderr=devnull):
+            if subprocess.call(command, stdout=devnull, stderr=devnull):
+            #if subprocess.call(command, stderr=devnull):
                 return False
     else:
         file_name = os.path.split(torrent_file)[1]

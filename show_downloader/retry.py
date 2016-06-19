@@ -10,6 +10,7 @@
 import time
 from functools import wraps
 
+import logging
 
 def retry(ExceptionToCheck, tries=4, delay=3, backoff=2):
     """Retry calling the decorated function using an exponential backoff.
@@ -28,7 +29,6 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2):
 
     """
     def deco_retry(f):
-
         @wraps(f)
         def f_retry(*args, **kwargs):
             mtries, mdelay = tries, delay
@@ -37,14 +37,12 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2):
                     return f(*args, **kwargs)
                 except ExceptionToCheck, error:
                     msg = "%s, Retrying in %d seconds..." % (str(error), mdelay)
-                    logging.warning(msg)
+                    logging.debug(msg)
                     time.sleep(mdelay)
                     mtries -= 1
                     mdelay *= backoff
             return f(*args, **kwargs)
-
         return f_retry  # true decorator
-
     return deco_retry
 
 # EOF

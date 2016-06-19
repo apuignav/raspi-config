@@ -18,6 +18,8 @@ from delugectl import cleanup_torrents, start_deluge, is_deluge_running
 # Deluge stuff
 
 _allowed_extensions = ['.mkv', '.mp4', '.avi']
+_forbidden_words = ['sample', 'rarbg.com.mp4']
+
 re_tv = re.compile(r'(.+?)'
                    r'[ .][Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d\d?)(\d\d)'
                    r'.*?'
@@ -41,7 +43,8 @@ def get_episodes(folder):
         if os.path.isfile(element):
             # Is file
             if os.path.splitext(element)[1].lower() in _allowed_extensions:
-                if not 'sample' in element.lower():
+                if not any([forbidden_word in element.lower()
+                            for forbidden_word in _forbidden_words]):
                     episode_list.append(element)
         elif os.path.isdir(element):
             # Is folder
