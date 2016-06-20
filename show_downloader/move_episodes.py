@@ -11,6 +11,9 @@ import re
 import shutil
 from argparse import ArgumentParser
 
+import subliminal
+from babelfish import Language
+
 from fuzzywuzzy import process
 
 from delugectl import cleanup_torrents, start_deluge, is_deluge_running
@@ -34,8 +37,12 @@ _reasons = {'season': "I couldn't determine season number",
 get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1]
                                 for element in os.listdir(folder)]
 
-def get_episodes(folder):
-    """Walk through episodes, also taking into account folders."""
+def get_video_files(folder):
+    """Recursively get video files in the given folder.
+
+    Files containing forbidden words are ignored.
+
+    """
     episode_list = []
     # Escape folder
     for element in os.listdir(folder):
@@ -48,18 +55,12 @@ def get_episodes(folder):
                     episode_list.append(element)
         elif os.path.isdir(element):
             # Is folder
-            episode_list.extend(get_episodes(element))
+            episode_list.extend(get_video_files(element))
         else:
             # What is this?
             raise ValueError("Found weird element in directory")
     return episode_list
 
-def analyze_episode(file_name):
-    """Anayze episode to find name, season and episode number."""
-    tv_data = re_tv.match(file_name)
-    if tv_data:
-        return tv_data.group(1).replace(".", " "), tv_data.group(2), tv_data.group(3)
-    return None
 
 def match_episodes(episodes, show_list):
     """Use fuzzywuzzy only if needed.
@@ -72,28 +73,31 @@ def match_episodes(episodes, show_list):
     episode_matching = {'matched': [],
                         'notmatched': []}
     for episode_path in episodes:
-        episode = os.path.split(episode_path)[1]
-        episode_info = analyze_episode(episode)
-        show_name = None
-        if episode_info:
-            show_name, season, _ = episode_info
-        else:
-            match = re_season.search(episode)
-            if not match:
-                episode_matching['notmatched'].append((episode_path, 'season'))
-                continue
-            season = next((val for val in match.groups()[::2] if val), None)
-            show_name = episode
-        season = int(season)
-        if not show_name in show_list:
-            extract_res = process.extractOne(show_name.replace('.', ' ').replace('_', ' '),
+        try:
+            episode = subliminal.scan_video(episode_path)
+        except ValueError:
+            tv_data = re_tv.match(os.path.basename(episode_path))
+            episode = None
+            if tv_data:
+                episode = subliminal.video.Episode(episode_path,
+                                                   tv_data.group(1).replace(".", " "),
+                                                   tv_data.group(2),
+                                                   tv_data.group(3))
+        if not episode:
+            episode_matching['notmatched'].append((episode_path, 'id'))
+            continue
+        if not episode.series in show_list:
+            extract_res = process.extractOne(os.path.basename(episode.name.
+                                                              replace('.', ' ').
+                                                              replace('_', ' ')),
                                              show_list, score_cutoff=85)
             if not extract_res:
                 episode_matching['notmatched'].append((episode_path, 'score'))
                 continue
-            show_name, _ = extract_res
-        episode_matching['matched'].append((episode_path, show_name, season))
+            episode.series = extract_res[1]
+        episode_matching['matched'].append(episode)
     return episode_matching['matched'], episode_matching['notmatched']
+
 
 def find_path_for_episodes(episodes, dest_folder):
     """Find the final path, corresponding to the Season of the show.
@@ -101,13 +105,14 @@ def find_path_for_episodes(episodes, dest_folder):
     Return [(origin, dest)]
     """
     output = []
-    for episode_path, show_name, season in episodes:
-        final_dir = os.path.join(dest_folder, show_name, 'Season %s' % season)
-        final_dest = os.path.join(final_dir, os.path.split(episode_path)[1])
+    for episode in episodes:
+        final_dir = os.path.join(dest_folder, episode.series, 'Season %s' % episode.season)
+        final_dest = os.path.join(final_dir, os.path.basename(episode.name))
         if not os.path.isdir(final_dir):
             os.mkdir(final_dir)
-        output.append((episode_path, final_dest))
+        output.append((episode.name, final_dest))
     return output
+
 
 def format_body(dest_folder, episodes_moved, episodes_not_moved, extra_problems):
     body = "Today I moved the following downloaded files:\n"
@@ -125,10 +130,12 @@ def format_body(dest_folder, episodes_moved, episodes_not_moved, extra_problems)
         body += "\nIn addition, I had the follwoing problems:\n%s" % '\n'.join(extra_problems)
     return body
 
+
 def send_push(body):
     from pibullet.device import Device
     myself = Device(os.path.expanduser('~/.pibullet'))
     myself.notify('Raspi digest', body)
+
 
 def send_email(body):
     """Summarize run in a nice email."""
@@ -164,7 +171,6 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--update-xbmc', action='store_true')
     parser.add_argument('--send-email', action='store_true')
-    parser.add_argument('--send-push', action='store_true')
     parser.add_argument('downloads_folder', action='store', type=str)
     parser.add_argument('shows_folder', action='store', type=str)
     args = parser.parse_args()
@@ -181,7 +187,7 @@ if __name__ == '__main__':
     # Get show list
     show_list = get_show_list(show_folder)
     # Get episode list
-    episodes = get_episodes(downloads_folder)
+    episodes = get_video_files(downloads_folder)
     # Find which episode goes where (we get a dict)
     episodes_with_show, episodes_unmatched = match_episodes(episodes, show_list)
     # Determine the final path for the episodes that were matched
@@ -193,7 +199,10 @@ if __name__ == '__main__':
     # Move
     problems = []
     folders_to_remove = []
+    final_videos = []
     for origin, dest in episodes_destination:
+        print origin, dest
+        continue
         try:
             os.system('mv "%s" "%s"' % (origin, dest))
             #print 'mv "%s" "%s"' % (origin, dest)
@@ -202,9 +211,11 @@ if __name__ == '__main__':
             origin_folder = os.path.dirname(origin)
             if not origin_folder in folders_to_protect:
                 folders_to_remove.append(origin_folder)
+            final_videos.append(subliminal.scan_video(dest))
         except Exception, exception:
             print exception
             problems.append("Exception moving %s to %s -> %s\n" % (origin, dest, exception))
+    assert False
     # Now remove
     for folder_to_remove in set(folders_to_remove):
         #print "Remove", folder_to_remove
@@ -212,6 +223,13 @@ if __name__ == '__main__':
     # Put deluge in previous status
     if was_deluge_running:
         start_deluge()
+    # Get subtitles
+    subtitles = subliminal.download_best_subtitles(final_videos,
+                                                   [Language('eng')],
+                                                   hearing_impaired=True)
+    # Save them to disk, next to the video
+    for video in final_videos:
+        subliminal.save_subtitles(video, subtitles[video])
     # Format body
     body = format_body(show_folder, episodes_destination, episodes_unmatched, problems)
     # Communicate if I did something
