@@ -195,7 +195,6 @@ if __name__ == '__main__':
     episodes = get_video_files(downloads_folder)
     # Find which episode goes where (we get a dict)
     episodes_with_show, episodes_unmatched = match_episodes(episodes, show_list)
-    print episodes_with_show
     # Determine the final path for the episodes that were matched
     episodes_destination = find_path_for_episodes(episodes_with_show, show_folder)
     # Protect folders with non-matched episodes
