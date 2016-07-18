@@ -86,7 +86,12 @@ def match_episodes(episodes, show_list):
         if not episode:
             episode_matching['notmatched'].append((episode_path, 'id'))
             continue
-        if not episode.series in show_list:
+        series = None
+        for show in show_list:
+            if show.lower() == episode.series.lower():
+                series = show
+                episode.series = show
+        if not series:
             extract_res = process.extractOne(os.path.basename(episode.name.
                                                               replace('.', ' ').
                                                               replace('_', ' ')),
@@ -190,6 +195,7 @@ if __name__ == '__main__':
     episodes = get_video_files(downloads_folder)
     # Find which episode goes where (we get a dict)
     episodes_with_show, episodes_unmatched = match_episodes(episodes, show_list)
+    print episodes_with_show
     # Determine the final path for the episodes that were matched
     episodes_destination = find_path_for_episodes(episodes_with_show, show_folder)
     # Protect folders with non-matched episodes
@@ -201,8 +207,6 @@ if __name__ == '__main__':
     folders_to_remove = []
     final_videos = []
     for origin, dest in episodes_destination:
-        print origin, dest
-        continue
         try:
             os.system('mv "%s" "%s"' % (origin, dest))
             #print 'mv "%s" "%s"' % (origin, dest)
@@ -215,7 +219,6 @@ if __name__ == '__main__':
         except Exception, exception:
             print exception
             problems.append("Exception moving %s to %s -> %s\n" % (origin, dest, exception))
-    assert False
     # Now remove
     for folder_to_remove in set(folders_to_remove):
         #print "Remove", folder_to_remove
@@ -225,11 +228,14 @@ if __name__ == '__main__':
         start_deluge()
     # Get subtitles
     subtitles = subliminal.download_best_subtitles(final_videos,
-                                                   [Language('eng')],
+                                                   {Language('eng')},
                                                    hearing_impaired=True)
     # Save them to disk, next to the video
     for video in final_videos:
-        subliminal.save_subtitles(video, subtitles[video])
+        if not subtitles[video]:
+            print "Didn't download subtitles for %s - %sx%s" % (video.series, video.season, video.episode)
+        else:
+            subliminal.save_subtitles(video, subtitles[video])
     # Format body
     body = format_body(show_folder, episodes_destination, episodes_unmatched, problems)
     # Communicate if I did something
