@@ -14,8 +14,6 @@ from argparse import ArgumentParser
 import subliminal
 from babelfish import Language
 
-from fuzzywuzzy import process
-
 from delugectl import cleanup_torrents, start_deluge, is_deluge_running
 
 # Deluge stuff
@@ -32,7 +30,9 @@ re_season = re.compile(r"[Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)")
 
 # Reasons for failing
 _reasons = {'season': "I couldn't determine season number",
-            'score': "I couldn't determine show name due to low score"}
+            'score': "I couldn't determine show name due to low score",
+            'id': "I couldn't determine the show name",
+            'showlist': "I couldn't match the show name with any folder"}
 
 get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1]
                                 for element in os.listdir(folder)]
@@ -63,13 +63,7 @@ def get_video_files(folder):
 
 
 def match_episodes(episodes, show_list):
-    """Use fuzzywuzzy only if needed.
-
-    See:
-        http://chairnerd.seatgeek.com/fuzzywuzzy-fuzzy-string-matching-in-python/
-        https://github.com/seatgeek/fuzzywuzzy
-
-    """
+    """Match episodes using subliminal."""
     episode_matching = {'matched': [],
                         'notmatched': []}
     for episode_path in episodes:
@@ -92,14 +86,8 @@ def match_episodes(episodes, show_list):
                 series = show
                 episode.series = show
         if not series:
-            extract_res = process.extractOne(os.path.basename(episode.name.
-                                                              replace('.', ' ').
-                                                              replace('_', ' ')),
-                                             show_list, score_cutoff=85)
-            if not extract_res:
-                episode_matching['notmatched'].append((episode_path, 'score'))
-                continue
-            episode.series = extract_res[1]
+            episode_matching['notmatched'].append((episode_path, 'showlist'))
+            continue
         episode_matching['matched'].append(episode)
     return episode_matching['matched'], episode_matching['notmatched']
 
@@ -111,8 +99,12 @@ def find_path_for_episodes(episodes, dest_folder):
     """
     output = []
     for episode in episodes:
-        final_dir = os.path.join(dest_folder, episode.series, 'Season %s' % episode.season)
-        final_dest = os.path.join(final_dir, os.path.basename(episode.name))
+        try:
+            final_dir = os.path.join(dest_folder, episode.series, 'Season %s' % episode.season)
+            final_dest = os.path.join(final_dir, os.path.basename(episode.name))
+        except Exception, e:
+            print "Error processing episode: ", episode.name, episode.series, episode.season
+            raise e
         if not os.path.isdir(final_dir):
             os.mkdir(final_dir)
         output.append((episode.name, final_dest))
