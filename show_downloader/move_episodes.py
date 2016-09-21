@@ -28,6 +28,11 @@ re_tv = re.compile(r'(.+?)'
 
 re_season = re.compile(r"[Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)")
 
+SHOW_CONVERSIONS = {'Marvels Agents of S.H.I.E.L.D.': 'Marvels Agents of S.H.I.E.L.D'.lower()}
+
+NO_SUBS = ['Mar de Plastico']
+
+
 # Reasons for failing
 _reasons = {'season': "I couldn't determine season number",
             'score': "I couldn't determine show name due to low score",
@@ -82,7 +87,7 @@ def match_episodes(episodes, show_list):
             continue
         series = None
         for show in show_list:
-            if show.lower() == episode.series.lower():
+            if show.lower() == SHOW_CONVERSIONS.get(episode.series, episode.series.lower()):
                 series = show
                 episode.series = show
         if not series:
@@ -206,7 +211,8 @@ if __name__ == '__main__':
             origin_folder = os.path.dirname(origin)
             if not origin_folder in folders_to_protect:
                 folders_to_remove.append(origin_folder)
-            final_videos.append(subliminal.scan_video(dest))
+            if not any([no_sub_show in dest for no_sub_show in NO_SUBS]):
+                final_videos.append(subliminal.scan_video(dest))
         except Exception, exception:
             print exception
             problems.append("Exception moving %s to %s -> %s\n" % (origin, dest, exception))
