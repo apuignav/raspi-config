@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# =============================================================================
+#!/usr/bin/env python # =============================================================================
 # @file   show_downloader.py
 # @author Albert Puig (albert.puig@epfl.ch)
 # @date   05.03.2016
@@ -20,6 +19,8 @@ from lxml import etree
 from Containers import TimedDict
 from retry import retry
 import PickleFile
+
+from delugectl import is_deluge_running
 
 PROPER_WORDS = ["PROPER", "REPACK"]
 
@@ -175,6 +176,9 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s : %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
+    if not is_deluge_running():
+        logging.fatal("Deluge is OFF!")
+        parser.exit("Error!")
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
     download_shows("http://showrss.info/user/15673.rss?magnets=true&namespaces=true&name=clean&quality=null&re=null",

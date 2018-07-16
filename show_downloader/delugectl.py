@@ -47,8 +47,10 @@ def cleanup_torrents(delete_fastresume=True, raise_on_fail=True, restart=False):
     stop_deluge()
     state_folder = os.path.join(config_folder, 'state')
     state_file = os.path.join(state_folder, 'torrents.state')
-    state = load(state_file)
-    # print 'Torrents'
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        state = load(state_file)
     # for torrent in state.torrents:
     #     print torrent, torrent.is_finished
     finished_torrents = [torrent for torrent in state.torrents if torrent.is_finished]

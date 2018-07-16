@@ -19,7 +19,9 @@ from delugectl import cleanup_torrents, start_deluge, is_deluge_running
 # Deluge stuff
 
 _allowed_extensions = ['.mkv', '.mp4', '.avi']
-_forbidden_words = ['sample', 'rarbg.com.mp4']
+_forbidden_regexes = [re.compile(r'sample'),
+                      re.compile(r'rarbg.com.mp4$'),
+                      re.compile(r'/rarbg.mp4$')]
 
 re_tv = re.compile(r'(.+?)'
                    r'[ .][Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d\d?)(\d\d)'
@@ -28,9 +30,11 @@ re_tv = re.compile(r'(.+?)'
 
 re_season = re.compile(r"[Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)")
 
-SHOW_CONVERSIONS = {'Marvels Agents of S.H.I.E.L.D.': 'Marvels Agents of S.H.I.E.L.D'.lower()}
+SHOW_CONVERSIONS = {'Marvels Agents of S.H.I.E.L.D.': 'Marvels Agents of S.H.I.E.L.D'.lower(),
+                    'Marvels Luke Cage': 'Luke Cage'.lower(),
+                    'House of Cards': 'House of cards (2013)'.lower()}
 
-NO_SUBS = ['Mar de Plastico']
+NO_SUBS = ['Mar de Plastico', 'La Sonata del Silencio', 'Velvet', 'El Ministerio del Tiempo']
 
 
 # Reasons for failing
@@ -41,6 +45,9 @@ _reasons = {'season': "I couldn't determine season number",
 
 get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1]
                                 for element in os.listdir(folder)]
+
+class EpisodePlaceholder(object):
+    """Dirty hack to use as a placeholder for episodes."""
 
 def get_video_files(folder):
     """Recursively get video files in the given folder.
@@ -55,8 +62,8 @@ def get_video_files(folder):
         if os.path.isfile(element):
             # Is file
             if os.path.splitext(element)[1].lower() in _allowed_extensions:
-                if not any([forbidden_word in element.lower()
-                            for forbidden_word in _forbidden_words]):
+                if not any([forbidden_regex.search(element.lower())
+                            for forbidden_regex in _forbidden_regexes]):
                     episode_list.append(element)
         elif os.path.isdir(element):
             # Is folder
@@ -87,6 +94,13 @@ def match_episodes(episodes, show_list):
             continue
         series = None
         for show in show_list:
+            if isinstance(episode, subliminal.Movie):
+                # It's a show detected as a movie
+                episod = EpisodePlaceholder()
+                episod.series = episode.title
+                episod.season = 1
+                episod.name = episode.name
+                episode = episod
             if show.lower() == SHOW_CONVERSIONS.get(episode.series, episode.series.lower()):
                 series = show
                 episode.series = show
@@ -129,7 +143,7 @@ def format_body(dest_folder, episodes_moved, episodes_not_moved, extra_problems)
             body += "  - '%s' because %s\n" % (file_name,
                                                _reasons.get(reason, 'of an unknown reason'))
     if extra_problems:
-        body += "\nIn addition, I had the follwoing problems:\n%s" % '\n'.join(extra_problems)
+        body += "\nIn addition, I had the following problems:\n%s" % '\n'.join(extra_problems)
     return body
 
 
@@ -230,7 +244,7 @@ if __name__ == '__main__':
     # Save them to disk, next to the video
     for video in final_videos:
         if not subtitles[video]:
-            print "Didn't download subtitles for %s - %sx%s" % (video.series, video.season, video.episode)
+            problems.append("Didn't download subtitles for %s - %sx%s" % (video.series, video.season, video.episode))
         else:
             subliminal.save_subtitles(video, subtitles[video])
     # Format body
