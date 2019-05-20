@@ -39,9 +39,11 @@ def get_info(feed):
         req = urllib2.Request(feed, headers={'User-Agent': "Magic Browser"}) # Hack to avoid 403 HTTP
         url = urllib2.urlopen(req, timeout=30)
         tree = etree.parse(url)
-        titles = tree.xpath("/rss/channel/item/title[not (contains(., '720p') or contains(., '720P'))]/text()")
+        # titles = tree.xpath("/rss/channel/item/title[not (contains(., '720p') or contains(., '720P'))]/text()")
+        titles = tree.xpath("/rss/channel/item/title/text()")
         published_dates = tree.xpath("/rss/channel/item/pubDate/text()")
-        torrent_files = tree.xpath("/rss/channel/item/link[not (contains(., '720p') or contains(., '720P'))]/text()")
+        # torrent_files = tree.xpath("/rss/channel/item/link[not (contains(., '720p') or contains(., '720P'))]/text()")
+        torrent_files = tree.xpath("/rss/channel/item/link/text()")
         return [(filter(lambda x: x in string.printable, titles[i]),
                  datetime.strptime(published_dates[i], '%a, %d %b %Y %H:%M:%S +0000'),
                  str(torrent_files[i])) for i in range(len(titles))]
