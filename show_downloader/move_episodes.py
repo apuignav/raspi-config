@@ -32,9 +32,15 @@ re_season = re.compile(r"[Ss](\d\d?)[Ee](\d\d?)|(\d\d?)x(\d\d?)|(\d)(\d\d)")
 
 SHOW_CONVERSIONS = {'Marvels Agents of S.H.I.E.L.D.': 'Marvels Agents of S.H.I.E.L.D'.lower(),
                     'Marvels Luke Cage': 'Luke Cage'.lower(),
-                    'House of Cards': 'House of cards (2013)'.lower()}
+                    'House of Cards': 'House of cards (2013)'.lower(),
+                    'Marvels Daredevil': 'Daredevil'.lower(),
+                    'This Is': 'This is us'.lower()}
 
-NO_SUBS = ['Mar de Plastico', 'La Sonata del Silencio', 'Velvet', 'El Ministerio del Tiempo']
+NO_SUBS = ['Mar de Plastico',
+           'La Sonata del Silencio',
+           'Velvet',
+           'El Ministerio del Tiempo',
+           'La Casa de Papel']
 
 
 # Reasons for failing
