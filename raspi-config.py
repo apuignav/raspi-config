@@ -35,8 +35,12 @@ packages_to_install = ['git',
                        'curl',
                        'nmon',
                        'deluge-console',
-                       # 'beautifulsoup',
-                       #'iotop',
+                       'python3-dev',
+                       'libffi-dev',
+                       'libssl-dev',
+                       'build-essential',
+                       'libffi6',
+                       'libffi-dev'
                       ]
 # For psutil
 # http://raspberrypi.stackexchange.com/questions/8566/peerguardian-moblock-installation-on-raspbmc
@@ -149,8 +153,8 @@ def configure_deluge():
         run("ln -sf /media/RaspiHD/torrent/completo/ /home/pi/runtime/")
         run("ln -sf /media/RaspiHD/torrent/download/ /home/pi/runtime/")
         run("ln -sf /media/RaspiHD/torrent/tv_shows.cache /home/pi/runtime/")
-        sudo("start deluge")
-        sudo("stop deluge")
+        sudo("systemctl start deluge")
+        sudo("systemctl stop deluge")
         if file_exists('/media/RaspiHD/backup/backup.deluge.tar.gz'):
             run('python $HOME/src/raspi-config/scripts/backup.py restore /media/RaspiHD/backup/ deluge')
 
@@ -163,6 +167,13 @@ def configure_mail():
 @task
 def configure_crontab():
     run("crontab /home/pi/src/raspi-config/config/crontab.pi")
+
+@task
+def configure_expensebot():
+    with settings(warn_only=True):
+        sudo('cp $HOME/src/expense-bot/service/expensebot.service /lib/systemd/system/')
+        sudo('systemctl daemon-reload')
+        sudo('systemctl start expensebot')
 
 @task
 def deploy_software(update=True):
@@ -179,6 +190,7 @@ def deploy_configuration():
     configure_deluge()
     configure_mail()
     configure_crontab()
+    configure_expensebot()
 
 @task
 def deploy(update=True):
