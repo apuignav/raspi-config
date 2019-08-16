@@ -49,10 +49,11 @@ easy_install_list   = ['-e "git+git://github.com/seatgeek/fuzzywuzzy.git#egg=fuz
                        '"git+git://github.com/apuignav/pibullet.git"',
                        #"psutil",
                        ]
-git_repositories    = ['https://github.com/MilhouseVH/bcmstat.git',
+git_repositories    = [#'https://github.com/MilhouseVH/bcmstat.git',
                        #'https://github.com/pilluli/service.xbmc.callbacks.git',
                        #'https://github.com/amet/script.xbmc.subtitles.git',
-                       'https://github.com/apuignav/raspi-config.git']
+                       'https://github.com/apuignav/raspi-config.git',
+                       'https://github.com/apuignav/expense-bot.git']
 if not simple_install:
     apt_repos           = ['ppa:keithw/mosh']
 
