@@ -20,9 +20,10 @@ from Containers import TimedDict
 from retry import retry
 import PickleFile
 
-from delugectl import is_deluge_running
+from delugectl import is_deluge_running, start_deluge
 
 PROPER_WORDS = ["PROPER", "REPACK"]
+CACHE_SIZE = 8*7
 
 
 @retry((urllib2.URLError, socket.timeout), tries=3, delay=10, backoff=2)
@@ -130,7 +131,7 @@ def download_shows(feed_list, accept_fail, download):
     if isinstance(feed_list, str):
         feed_list = [feed_list]
     cache_file = os.path.expanduser('~/runtime/tv_shows.cache')
-    cache = TimedDict(3*7*24*3600) # Keys last for a week
+    cache = TimedDict(CACHE_SIZE*24*3600) # Keys last for two months
     if os.path.exists(cache_file):
         cache = PickleFile.load(cache_file)
     for feed in feed_list:
@@ -141,7 +142,7 @@ def download_shows(feed_list, accept_fail, download):
         #    print ' -', key
         for episode, episode_date, torrent_file in feed_info:
             logging.debug('Found episode: %s %s', episode, torrent_file)
-            if (datetime.today() - episode_date).days > 3*7: # Too old!
+            if (datetime.today() - episode_date).days > 4*7: # Too old!
                 logging.debug(' Too old')
                 continue
             if episode in cache: # Already downloaded
@@ -179,8 +180,10 @@ if __name__ == '__main__':
                         format='%(asctime)s : %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
     if not is_deluge_running():
-        logging.fatal("Deluge is OFF!")
-        parser.exit("Error!")
+        logging.warning("Deluge is OFF! Starting and waiting 30s")
+        start_deluge()
+        import time
+        time.sleep(30)
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
     download_shows("http://showrss.info/user/15673.rss?magnets=true&namespaces=true&name=clean&quality=null&re=null",

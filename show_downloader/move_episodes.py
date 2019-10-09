@@ -34,13 +34,17 @@ SHOW_CONVERSIONS = {'Marvels Agents of S.H.I.E.L.D.': 'Marvels Agents of S.H.I.E
                     'Marvels Luke Cage': 'Luke Cage'.lower(),
                     'House of Cards': 'House of cards (2013)'.lower(),
                     'Marvels Daredevil': 'Daredevil'.lower(),
-                    'This Is': 'This is us'.lower()}
+                    'This Is': 'This is us'.lower(),
+                    'This is': 'This is us'.lower(),
+                    'Money Heist': 'La Casa de Papel'.lower(),
+                    'Tom Clancys Jack Ryan': "Tom Clancy's Jack Ryan".lower()}
 
 NO_SUBS = ['Mar de Plastico',
            'La Sonata del Silencio',
            'Velvet',
            'El Ministerio del Tiempo',
-           'La Casa de Papel']
+           'La Casa de Papel',
+           'El Pionero']
 
 
 # Reasons for failing
