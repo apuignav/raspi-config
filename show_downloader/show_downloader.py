@@ -142,9 +142,9 @@ def download_shows(feed_list, accept_fail, download):
         #    print ' -', key
         for episode, episode_date, torrent_file in feed_info:
             logging.debug('Found episode: %s %s', episode, torrent_file)
-            if (datetime.today() - episode_date).days > 4*7: # Too old!
-                logging.debug(' Too old')
-                continue
+#             if (datetime.today() - episode_date).days > 4*7: # Too old!
+#                 logging.debug(' Too old')
+#                 continue
             if episode in cache: # Already downloaded
                 logging.debug(' Already downloaded')
                 continue

@@ -23,5 +23,5 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 # m h  dom mon dow   command
-0 7,8,9,12,16 * * * python /home/osmc/src/raspi-config/show_downloader/show_downloader.py
+0 12,16 * * * python /home/osmc/src/raspi-config/show_downloader/show_downloader.py
 0 19 * * * python /home/osmc/src/raspi-config/show_downloader/move_episodes.py /home/pi/runtime/completo/ /media/RaspiHD/Series/ --update-xbmc --send-email

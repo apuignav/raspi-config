@@ -176,6 +176,12 @@ def configure_expensebot():
         sudo('systemctl start expensebot')
 
 @task
+def configure_samba():
+    with settings(warn_only=True):
+        sudo('cp $HOME/src/raspi-config/config/smb-shares.conf /etc/samba/smb-shares.conf')
+        sudo('systemctl restart samba')
+
+@task
 def deploy_software(update=True):
     prepare_dirs()
     download_things()
@@ -191,6 +197,7 @@ def deploy_configuration():
     configure_mail()
     configure_crontab()
     configure_expensebot()
+    configure_samba()
 
 @task
 def deploy(update=True):
