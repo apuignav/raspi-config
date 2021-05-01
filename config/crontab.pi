@@ -23,5 +23,10 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 # m h  dom mon dow   command
-0 12,16 * * * python /home/osmc/src/raspi-config/show_downloader/show_downloader.py
-0 19 * * * python /home/osmc/src/raspi-config/show_downloader/move_episodes.py /home/pi/runtime/completo/ /media/RaspiHD/Series/ --update-xbmc --send-email
+0 17 * * 1-5 python2 /home/osmc/src/raspi-config/show_downloader/show_downloader.py
+0 19 * * 1-5 python2 /home/osmc/src/raspi-config/show_downloader/move_episodes.py /home/osmc/runtime/completo/ /media/RaspiHD/Series/ --update-xbmc --send-email
+0 4 * * * $HOME/src/expense-bot/service/update.sh
+0 10 * * 6,7 python2 /home/osmc/src/raspi-config/show_downloader/show_downloader.py
+0 18 * * 6,7 python2 /home/osmc/src/raspi-config/show_downloader/move_episodes.py /home/osmc/runtime/completo/ /media/RaspiHD/Series/ --update-xbmc --send-email
+10 19 * * * sudo /sbin/hdparm -S 0 /dev/sda > /dev/null
+0 2 * * * /media/RaspiHD/Leo/Youtube/update.sh
