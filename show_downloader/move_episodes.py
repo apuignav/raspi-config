@@ -53,7 +53,7 @@ _reasons = {'season': "I couldn't determine season number",
             'id': "I couldn't determine the show name",
             'showlist': "I couldn't match the show name with any folder"}
 
-get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1]
+get_show_list = lambda folder: [os.path.split(os.path.join(folder, element))[1].lower()
                                 for element in os.listdir(folder)]
 
 class EpisodePlaceholder(object):
@@ -103,15 +103,15 @@ def match_episodes(episodes, show_list):
             episode_matching['notmatched'].append((episode_path, 'id'))
             continue
         series = None
-        for show in show_list:
-            if isinstance(episode, subliminal.Movie):
-                # It's a show detected as a movie
-                episod = EpisodePlaceholder()
-                episod.series = episode.title
-                episod.season = 1
-                episod.name = episode.name
-                episode = episod
-            if show.lower() == SHOW_CONVERSIONS.get(episode.series, episode.series.lower()):
+        if isinstance(episode, subliminal.Movie):
+            # It's a show detected as a movie
+            episod = EpisodePlaceholder()
+            episod.series = episode.title
+            episod.season = 1
+            episod.name = episode.name
+            episode = episod
+        else:
+            if SHOW_CONVERSIONS.get(episode.series, episode.series.lower()) in show_list:
                 series = show
                 episode.series = show
         if not series:
